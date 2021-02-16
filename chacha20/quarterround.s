@@ -1,20 +1,6 @@
 .syntax unified
 .cpu cortex-m4
 
-rotate:
-    # rotate function in asm
-    # function header in c: uint32 rotate(uint32 a, int d)
-    mov r3, #32       // prepare 32 for rotate
-    mov r2, r0        // duplicate input a into r2
-    sub r3, r1        // 32 - d
-
-    lsl r2, r1        // a <<= d
-    lsr r0, r3        // t = a >> 32-d
-
-    orr r0, r2         // t | a  (== a | t)
-    bx lr             // return r0
-
-
 .global quarterround
 .type quarterround, %function
 quarterround:
@@ -27,7 +13,7 @@ quarterround:
 
     # Arguments are placed in r0 and r1, the return value should go in r0.
     # To be certain, we just push all of them onto the stack.
-    push {r4-r12}
+    push {r4-r8}
 
     # use pointers to load values from memory:
     ldr r4, [r0] // r4 = a
@@ -35,17 +21,13 @@ quarterround:
     ldr r6, [r2] // r6 = c
     ldr r7, [r3] // r7 = d
 
-    push {r0-r3} // make r0 to r3 free for calling the rotate function. Not used by this function itself.
-    push {lr}
-    
-
     # first part of quarterround:
     add r4, r5  // *a = *a + *b
     eor r7, r4  // *d = *d ^ *a
 
     # Call rotate(d, 16):
-    lsr r0, r7, #16        	// t = d >> 16
-    orr r7, r0, r7, lsl #16     // (d << 16) | t
+    lsr r8, r7, #16        	// t = d >> (32 - 16)
+    orr r7, r8, r7, lsl #16     // d = (d << 16) | t
 
 
 
@@ -54,11 +36,8 @@ quarterround:
     eor r5, r6 // *b = *b ^ c
 
     # Call rotate(b, 12):
-    mov r0, r5
-    mov r1, #12
-    bl rotate
-
-    mov r5, r0 // save return value in d 
+    lsr r8, r5, #20 		// t = b >> (32 - 12)
+    orr r5, r8, r5, lsl #12     // b = (b << 12) | t
 
 
 
@@ -67,11 +46,9 @@ quarterround:
     eor r7, r4  // *d = *d ^ a
 
     # Call rotate(d, 8):
-    mov r0, r7
-    mov r1, #8
-    bl rotate
+    lsr r8, r7, #24       	// t = d >> (32 - 8)
+    orr r7, r8, r7, lsl #8      // d = (d << 8) | t
 
-    mov r7, r0 // save return value in d 
 
 
     # fourth part of quarterround:
@@ -79,16 +56,10 @@ quarterround:
     eor r5, r6 // *b = *b ^ c
 
     # Call rotate(b, 7):
-    mov r0, r5
-    mov r1, #7
-    bl rotate
-
-    mov r5, r0 // save return value in d 
+    lsr r8, r5, #25 		// t = b >> (32 - 7)
+    orr r5, r8, r5, lsl #7      // b = (b << 7) | t
 
 
-    # restore address pointers
-    pop {lr}
-    pop {r0-r3} 
 
     # write the results back to memory:
     str r4, [r0]
@@ -97,6 +68,6 @@ quarterround:
     str r7, [r3] 
 
     # Finally, we restore the callee-saved register values and branch back.
-    pop {r4-r12}
+    pop {r4-r8}
     bx lr
 
