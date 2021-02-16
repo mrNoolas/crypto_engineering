@@ -10,7 +10,16 @@
 typedef uint32_t uint32;
 
 extern uint32 quarterround(uint32 *a, uint32 *b, uint32 *c, uint32 *d);
-extern uint32 load_littleendian(const unsigned char *x);
+extern uint32 load_test(const unsigned char *x);
+
+static uint32 load_littleendian(const unsigned char *x)
+{
+  return
+      (uint32) (x[0]) \
+  | (((uint32) (x[1])) << 8) \
+  | (((uint32) (x[2])) << 16) \
+  | (((uint32) (x[3])) << 24);
+}
 
 static void store_littleendian(unsigned char *x,uint32 u)
 {
@@ -101,6 +110,8 @@ static const unsigned char sigma[16] = "expand 32-byte k";
 
 int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const unsigned char *nonce, const unsigned char *key)
 {
+   printf ("Characters: %c \n", load_test(sigma));
+
 /* testing code
   uint32 p0, p1, p2, p3;
   p0 = 0;
