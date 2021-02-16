@@ -109,6 +109,10 @@ static const unsigned char sigma[16] = "expand 32-byte k";
 
 int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const unsigned char *nonce, const unsigned char *key)
 {
+  char str[25];
+  sprintf(str, "%f", load_test(sigma));
+  send_USART_str(str);
+  
 /* testing code
   uint32 p0, p1, p2, p3;
   p0 = 0;
