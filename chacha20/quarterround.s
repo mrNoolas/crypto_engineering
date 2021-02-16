@@ -43,21 +43,17 @@ quarterround:
 
     # third part of quarterround:
     add r4, r5  // *a = *a + *b
-    str r4, [r0] // write a to memory
     eor r7, r4  // *d = *d ^ a
-    
 
     # Call rotate(d, 8):
     lsr r8, r7, #24       	// t = d >> (32 - 8)
     orr r7, r8, r7, lsl #8      // d = (d << 8) | t
 
-    str r7, [r3]	// write d to memory
 
 
     # fourth part of quarterround:
-    add r6, r7 		// *c = *c + *d
-    str r6, [r2] 	// write c to memory
-    eor r5, r6 		// *b = *b ^ c
+    add r6, r7 // *c = *c + *d
+    eor r5, r6 // *b = *b ^ c
 
     # Call rotate(b, 7):
     lsr r8, r5, #25 		// t = b >> (32 - 7)
@@ -66,10 +62,10 @@ quarterround:
 
 
     # write the results back to memory:
-    //str r4, [r0]
+    str r4, [r0]
     str r5, [r1]
-    //str r6, [r2]
-    //str r7, [r3] 
+    str r6, [r2]
+    str r7, [r3] 
 
     # Finally, we restore the callee-saved register values and branch back.
     pop {r4-r8}

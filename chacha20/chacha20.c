@@ -9,7 +9,7 @@
 
 typedef uint32_t uint32;
 
-extern uint32 quarterround(uint32 *a, uint32 *b, uint32 *c, uint32 *d);
+extern uint32 fullround(uint32 *a, uint32 *b, uint32 *c, uint32 *d, uint32 *e, uint32 *f, uint32 *g, uint32 *h, uint32 *i, uint32 *j, uint32 *k, uint32 *l, uint32 *m, uint32 *n, uint32 *o, uint32 *p);
 
 static uint32 load_littleendian(const unsigned char *x)
 {
@@ -57,6 +57,10 @@ static int crypto_core_chacha20(
   j15 = x15 = load_littleendian(in +  4);
 
   for (i = ROUNDS; i > 0; i -= 2) {
+    fullround(&x0, &x4, &x8, &x12, &x1, &x5, &x9, &x13, &x2, &x6, &x10, &x14, &x3, &x7, &x11, &x15);
+    fullround(&x0, &x5, &x10, &x15, &x1, &x6, &x11, &x12, &x2, &x7, &x8, &x13, &x3, &x4, &x9, &x14);
+     
+/*
     quarterround(&x0, &x4, &x8,&x12);
     quarterround(&x1, &x5, &x9,&x13);
     quarterround(&x2, &x6,&x10,&x14);
@@ -66,6 +70,8 @@ static int crypto_core_chacha20(
     quarterround(&x1, &x6,&x11,&x12);
     quarterround(&x2, &x7, &x8,&x13);
     quarterround(&x3, &x4, &x9,&x14);
+*/
+
   }
 
   x0 += j0;
@@ -109,10 +115,6 @@ static const unsigned char sigma[16] = "expand 32-byte k";
 
 int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const unsigned char *nonce, const unsigned char *key)
 {
-  char str[25];
-  sprintf(str, "%f", load_test(sigma));
-  send_USART_str(str);
-  
 /* testing code
   uint32 p0, p1, p2, p3;
   p0 = 0;
