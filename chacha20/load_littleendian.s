@@ -5,7 +5,7 @@
 .type load_littleendian, %function
 load_littleendian:
     // =============== load_littleendian Somewhat more efficient implementation =====================
-    // Our function header in C: uint32 load_littleendian(const unsigned char *x);
+    // Our function header in C: extern uint32 load_littleendian(const unsigned char *x);
     // r0 contains &x
 
     // Argument is placed in r0, the return value should go in r0.
