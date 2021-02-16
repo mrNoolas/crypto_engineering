@@ -10,15 +10,7 @@
 typedef uint32_t uint32;
 
 extern uint32 quarterround(uint32 *a, uint32 *b, uint32 *c, uint32 *d);
-
-static uint32 load_littleendian(const unsigned char *x)
-{
-  return
-      (uint32) (x[0]) \
-  | (((uint32) (x[1])) << 8) \
-  | (((uint32) (x[2])) << 16) \
-  | (((uint32) (x[3])) << 24);
-}
+extern uint32 load_littleendian(const unsigned char *x);
 
 static void store_littleendian(unsigned char *x,uint32 u)
 {
@@ -122,7 +114,7 @@ int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const 
 
   unsigned char blob2[5] = {p0 + '0', p1 + '0',  p2 + '0', p3 + '0', '\0'};
   send_USART_str(blob2);
- */ 
+ */
 
   unsigned char in[16];
   unsigned char block[64];
