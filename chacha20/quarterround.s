@@ -4,12 +4,12 @@
 rotate:
     # rotate function in asm
     # function header in c: uint32 rotate(uint32 a, int d)
-    mov r2, r0        // duplicate input a into r2
     mov r3, #32       // prepare 32 for rotate
+    mov r2, r0        // duplicate input a into r2
     sub r3, r1        // 32 - d
 
-    lsr r0, r3        // t = a >> 32-d
     lsl r2, r1        // a <<= d
+    lsr r0, r3        // t = a >> 32-d
 
     orr r0, r2         // t | a  (== a | t)
     bx lr             // return r0
@@ -38,16 +38,16 @@ quarterround:
     push {r0-r3} // make r0 to r3 free for calling the rotate function. Not used by this function itself.
     push {lr}
     
+
     # first part of quarterround:
     add r4, r5  // *a = *a + *b
-    eor r7, r4  // *d = *d ^ a
+    eor r7, r4  // *d = *d ^ *a
 
     # Call rotate(d, 16):
-    mov r0, r7
-    mov r1, #16
-    bl rotate 
+    lsr r0, r7, #16        	// t = d >> 16
+    orr r7, r0, r7, lsl #16     // (d << 16) | t
 
-    mov r7, r0 // save return value in d 
+
 
     # second part of quarterround:
     add r6, r7 // *c = *c + *d
