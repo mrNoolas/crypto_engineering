@@ -9,9 +9,9 @@
 
 typedef uint32_t uint32;
 
-//extern uint32 fullround(uint32 *a, uint32 *b, uint32 *c, uint32 *d, uint32 *e, uint32 *f, uint32 *g, uint32 *h, uint32 *i, uint32 *j, uint32 *k, uint32 *l, uint32 *m, uint32 *n, uint32 *o, uint32 *p);
+extern uint32 fullround(uint32 *a);
 
-extern uint32 quarterround(uint32 *a);//, uint32 *b, uint32 *c, uint32 *d);
+//extern uint32 quarterround(uint32 *a);//, uint32 *b, uint32 *c, uint32 *d);
 
 static uint32 load_littleendian(const unsigned char *x)
 {
@@ -58,57 +58,53 @@ static int crypto_core_chacha20(
   j14 = x14 = load_littleendian(in +  0);
   j15 = x15 = load_littleendian(in +  4);
 
+  uint32 x[16] = {x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15};
   for (i = ROUNDS; i > 0; i -= 2) {
-    //fullround(&x0, &x4, &x8, &x12, &x1, &x5, &x9, &x13, &x2, &x6, &x10, &x14, &x3, &x7, &x11, &x15);
-    //fullround(&x0, &x5, &x10, &x15, &x1, &x6, &x11, &x12, &x2, &x7, &x8, &x13, &x3, &x4, &x9, &x14);
-    uint32 x[4] = {&x0, &x4, &x8,&x12};    
+    // fullround(&x0, &x4, &x8, &x12, &x1, &x5, &x9, &x13, &x2, &x6, &x10, &x14, &x3, &x7, &x11, &x15);
+    // fullround(&x0, &x5, &x10, &x15, &x1, &x6, &x11, &x12, &x2, &x7, &x8, &x13, &x3, &x4, &x9, &x14);
+    fullround(x);
 
-    quarterround(x);
-/*    quarterround(&x1, &x5, &x9,&x13);
-    quarterround(&x2, &x6,&x10,&x14);
-    quarterround(&x3, &x7,&x11,&x15);
-
-    quarterround(&x0, &x5,&x10,&x15);
-    quarterround(&x1, &x6,&x11,&x12);
-    quarterround(&x2, &x7, &x8,&x13);
-    quarterround(&x3, &x4, &x9,&x14);
+    /*uint32 y[] = {x[0], x[4], x[8], x[12], x[1], x[5], x[9], x[13], x[2], x[6], x[10], x[14], x[3], x[7], x[11], x[15]};
+    fullround(y);
+    uint32 z[] = {y[0], y[5], y[10], y[15], y[4], y[9], y[14], y[3], y[8], y[13], y[2], y[7], y[12], y[1], y[6], y[11]};
+    fullround(z)
+    x = {x[0], x[13], x[10], x[7], x[4], x[1], x[14], x[11], x[8], x[5], x[2], x[15], x[12], x[9], x[6], x[3]};
 */
-
   }
 
-  x0 += j0;
-  x1 += j1;
-  x2 += j2;
-  x3 += j3;
-  x4 += j4;
-  x5 += j5;
-  x6 += j6;
-  x7 += j7;
-  x8 += j8;
-  x9 += j9;
-  x10 += j10;
-  x11 += j11;
-  x12 += j12;
-  x13 += j13;
-  x14 += j14;
-  x15 += j15;
+  x[0] += j0;
+  x[1] += j1;
+  x[2] += j2;
+  x[3] += j3;
+  x[4] += j4;
+  x[5] += j5;
+  x[6] += j6;
+  x[7] += j7;
+  x[8] += j8;
+  x[9] += j9;
+  x[10] += j10;
+  x[11] += j11;
+  x[12] += j12;
+  x[13] += j13;
+  x[14] += j14;
+  x[15] += j15;
 
-  store_littleendian(out + 0,x0);
-  store_littleendian(out + 4,x1);
-  store_littleendian(out + 8,x2);
-  store_littleendian(out + 12,x3);
-  store_littleendian(out + 16,x4);
-  store_littleendian(out + 20,x5);
-  store_littleendian(out + 24,x6);
-  store_littleendian(out + 28,x7);
-  store_littleendian(out + 32,x8);
-  store_littleendian(out + 36,x9);
-  store_littleendian(out + 40,x10);
-  store_littleendian(out + 44,x11);
-  store_littleendian(out + 48,x12);
-  store_littleendian(out + 52,x13);
-  store_littleendian(out + 56,x14);
-  store_littleendian(out + 60,x15);
+  store_littleendian(out + 0,x[0]);
+  store_littleendian(out + 4,x[1]);
+  store_littleendian(out + 8,x[2]);
+  store_littleendian(out + 12,x[3]);
+  store_littleendian(out + 16,x[4]);
+  store_littleendian(out + 20,x[5]);
+  store_littleendian(out + 24,x[6]);
+  store_littleendian(out + 28,x[7]);
+  store_littleendian(out + 32,x[8]);
+  store_littleendian(out + 36,x[9]);
+  store_littleendian(out + 40,x[10]);
+  store_littleendian(out + 44,x[11]);
+  store_littleendian(out + 48,x[12]);
+  store_littleendian(out + 52,x[13]);
+  store_littleendian(out + 56,x[14]);
+  store_littleendian(out + 60,x[15]);
 
   return 0;
 }
