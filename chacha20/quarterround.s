@@ -13,7 +13,7 @@ quarterround:
 
     # Arguments are placed in r0 and r1, the return value should go in r0.
     # To be certain, we just push all of them onto the stack.
-    push {r4-r8}
+    push {r4-r7}
 
     # use pointers to load values from memory:
     ldr r4, [r0] // r4 = a
@@ -22,44 +22,25 @@ quarterround:
     ldr r7, [r3] // r7 = d
 
     # first part of quarterround:
-    add r4, r5  // *a = *a + *b
-    eor r7, r4  // *d = *d ^ *a
-
-    # Call rotate(d, 16):
-    lsr r8, r7, #16        	// t = d >> (32 - 16)
-    orr r7, r8, r7, lsl #16     // d = (d << 16) | t
-
-
+    add r4, r5  	// *a = *a + *b
+    eor r7, r4  	// *d = *d ^ *a
+    # rotate of r7 is done later using barrel shifter
 
     # second part of quarterround:
-    add r6, r7 // *c = *c + *d
-    eor r5, r6 // *b = *b ^ c
-
-    # Call rotate(b, 12):
-    lsr r8, r5, #20 		// t = b >> (32 - 12)
-    orr r5, r8, r5, lsl #12     // b = (b << 12) | t
-
-
+    add r6, r6, r7, ror #16 	// *c = *c + *d
+    eor r5, r6 			// *b = *b ^ c
+    # rotate of r5 is done later using barrel shifter
 
     # third part of quarterround:
-    add r4, r5  // *a = *a + *b
-    eor r7, r4  // *d = *d ^ a
-
-    # Call rotate(d, 8):
-    lsr r8, r7, #24       	// t = d >> (32 - 8)
-    orr r7, r8, r7, lsl #8      // d = (d << 8) | t
-
-
+    add r4, r4, r5, ror #20  	// *a = *a + *b
+    eor r7, r4, r7, ror #16  	// *d = *d ^ a
 
     # fourth part of quarterround:
-    add r6, r7 // *c = *c + *d
-    eor r5, r6 // *b = *b ^ c
+    add r6, r6, r7, ror #24	// *c = *c + *d
+    eor r5, r6, r5, ror #20 	// *b = *b ^ c
 
-    # Call rotate(b, 7):
-    lsr r8, r5, #25 		// t = b >> (32 - 7)
-    orr r5, r8, r5, lsl #7      // b = (b << 7) | t
-
-
+    ror r7, r7, #24
+    ror r5, r5, #25
 
     # write the results back to memory:
     str r4, [r0]
@@ -68,6 +49,6 @@ quarterround:
     str r7, [r3] 
 
     # Finally, we restore the callee-saved register values and branch back.
-    pop {r4-r8}
+    pop {r4-r7}
     bx lr
 
