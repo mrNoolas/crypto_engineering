@@ -60,16 +60,7 @@ static int crypto_core_chacha20(
 
   uint32 x[16] = {x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15};
   for (i = ROUNDS; i > 0; i -= 2) {
-    // fullround(&x0, &x4, &x8, &x12, &x1, &x5, &x9, &x13, &x2, &x6, &x10, &x14, &x3, &x7, &x11, &x15);
-    // fullround(&x0, &x5, &x10, &x15, &x1, &x6, &x11, &x12, &x2, &x7, &x8, &x13, &x3, &x4, &x9, &x14);
     fullround(x);
-
-    /*uint32 y[] = {x[0], x[4], x[8], x[12], x[1], x[5], x[9], x[13], x[2], x[6], x[10], x[14], x[3], x[7], x[11], x[15]};
-    fullround(y);
-    uint32 z[] = {y[0], y[5], y[10], y[15], y[4], y[9], y[14], y[3], y[8], y[13], y[2], y[7], y[12], y[1], y[6], y[11]};
-    fullround(z)
-    x = {x[0], x[13], x[10], x[7], x[4], x[1], x[14], x[11], x[8], x[5], x[2], x[15], x[12], x[9], x[6], x[3]};
-*/
   }
 
   x[0] += j0;
