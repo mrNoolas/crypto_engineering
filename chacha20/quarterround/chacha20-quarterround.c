@@ -11,7 +11,7 @@ typedef uint32_t uint32;
 
 //extern uint32 fullround(uint32 *a, uint32 *b, uint32 *c, uint32 *d, uint32 *e, uint32 *f, uint32 *g, uint32 *h, uint32 *i, uint32 *j, uint32 *k, uint32 *l, uint32 *m, uint32 *n, uint32 *o, uint32 *p);
 
-extern uint32 quarterround(uint32 *a);//, uint32 *b, uint32 *c, uint32 *d);
+extern uint32 quarterround(uint32 *a, uint32 *b, uint32 *c, uint32 *d);
 
 static uint32 load_littleendian(const unsigned char *x)
 {
@@ -61,10 +61,10 @@ static int crypto_core_chacha20(
   for (i = ROUNDS; i > 0; i -= 2) {
     //fullround(&x0, &x4, &x8, &x12, &x1, &x5, &x9, &x13, &x2, &x6, &x10, &x14, &x3, &x7, &x11, &x15);
     //fullround(&x0, &x5, &x10, &x15, &x1, &x6, &x11, &x12, &x2, &x7, &x8, &x13, &x3, &x4, &x9, &x14);
-    uint32 x[4] = {&x0, &x4, &x8,&x12};    
+     
 
-    quarterround(x);
-/*    quarterround(&x1, &x5, &x9,&x13);
+    quarterround(&x0, &x4, &x8,&x12);
+    quarterround(&x1, &x5, &x9,&x13);
     quarterround(&x2, &x6,&x10,&x14);
     quarterround(&x3, &x7,&x11,&x15);
 
@@ -72,7 +72,7 @@ static int crypto_core_chacha20(
     quarterround(&x1, &x6,&x11,&x12);
     quarterround(&x2, &x7, &x8,&x13);
     quarterround(&x3, &x4, &x9,&x14);
-*/
+
 
   }
 
@@ -118,19 +118,19 @@ static const unsigned char sigma[16] = "expand 32-byte k";
 int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const unsigned char *nonce, const unsigned char *key)
 {
 /* testing code
-  uint32 p[4];
-  p[0] = 1;
-  p[1] = 2;
-  p[2] = 3;
-  p[3] = 4;
-  unsigned char blob[5] = {p[0] + '0', p[1] + '0',  p[2] + '0', p[3] + '0', '\0'};
+  uint32 p0, p1, p2, p3;
+  p0 = 0;
+  p1 = 0;
+  p2 = 0;
+  p3 = 0;
+  unsigned char blob[5] = {p0 + '0', p1 + '0',  p2 + '0', p3 + '0', '\0'};
   send_USART_str(blob);
 
-  quarterround(&p);
+  quarterround(&p0, &p1, &p2, &p3);
 
-  unsigned char blob1[5] = {p[0] + '0', p[1] + '0',  p[2] + '0', p[3] + '0', '\0'};
-  send_USART_str(blob1);
- //*/ 
+  unsigned char blob2[5] = {p0 + '0', p1 + '0',  p2 + '0', p3 + '0', '\0'};
+  send_USART_str(blob2);
+ */ 
 
   unsigned char in[16];
   unsigned char block[64];
