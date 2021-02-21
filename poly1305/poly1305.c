@@ -11,7 +11,11 @@ static void add(unsigned int h[17],const unsigned int c[17])
   unsigned int j;
   unsigned int u;
   u = 0;
-  for (j = 0;j < 17;++j) { u += h[j] + c[j]; h[j] = u & 255; u >>= 8; }
+  for (j = 0;j < 17;++j) {
+    u += h[j] + c[j];
+    h[j] = u & 255;
+    u >>= 8;
+  }
 }
 
 static void squeeze(unsigned int h[17])
@@ -19,11 +23,21 @@ static void squeeze(unsigned int h[17])
   unsigned int j;
   unsigned int u;
   u = 0;
-  for (j = 0;j < 16;++j) { u += h[j]; h[j] = u & 255; u >>= 8; }
-  u += h[16]; h[16] = u & 3;
+  for (j = 0;j < 16;++j) {
+    u += h[j];
+    h[j] = u & 255;
+    u >>= 8;
+  }
+  u += h[16];
+  h[16] = u & 3;
   u = 5 * (u >> 2);
-  for (j = 0;j < 16;++j) { u += h[j]; h[j] = u & 255; u >>= 8; }
-  u += h[16]; h[16] = u;
+  for (j = 0;j < 16;++j) {
+    u += h[j];
+    h[j] = u & 255;
+    u >>= 8;
+  }
+  u += h[16];
+  h[16] = u;
 }
 
 static const unsigned int minusp[17] = {
@@ -50,11 +64,17 @@ static void mulmod(unsigned int h[17],const unsigned int r[17])
 
   for (i = 0;i < 17;++i) {
     u = 0;
-    for (j = 0;j <= i;++j) u += h[j] * r[i - j];
-    for (j = i + 1;j < 17;++j) u += 320 * h[j] * r[i + 17 - j];
+    for (j = 0;j <= i;++j) {
+      u += h[j] * r[i - j];
+    }
+    for (j = i + 1;j < 17;++j) {
+      u += 320 * h[j] * r[i + 17 - j];
+    }
     hr[i] = u;
   }
-  for (i = 0;i < 17;++i) h[i] = hr[i];
+  for (i = 0;i < 17;++i) {
+    h[i] = hr[i];
+  }
   squeeze(h);
 }
 
@@ -86,19 +106,28 @@ int crypto_onetimeauth_poly1305(unsigned char *out,const unsigned char *in,unsig
   for (j = 0;j < 17;++j) h[j] = 0;
 
   while (inlen > 0) {
-    for (j = 0;j < 17;++j) c[j] = 0;
-    for (j = 0;(j < 16) && (j < inlen);++j) c[j] = in[j];
+    for (j = 0;j < 17;++j) {
+      c[j] = 0;
+    }
+    for (j = 0;(j < 16) && (j < inlen);++j) {
+      c[j] = in[j];
+    }
     c[j] = 1;
-    in += j; inlen -= j;
+    in += j;
+    inlen -= j;
     add(h,c);
     mulmod(h,r);
   }
 
   freeze(h);
 
-  for (j = 0;j < 16;++j) c[j] = k[j + 16];
+  for (j = 0;j < 16;++j) {
+    c[j] = k[j + 16];
+  }
   c[16] = 0;
   add(h,c);
-  for (j = 0;j < 16;++j) out[j] = h[j];
+  for (j = 0;j < 16;++j) {
+    out[j] = h[j];
+  }
   return 0;
 }
