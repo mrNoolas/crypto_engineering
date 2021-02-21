@@ -7,11 +7,11 @@ OBJS       = stm32f4_wrapper.o
 all: chacha20test.bin \
 		 chacha20speed.bin
 
-chacha20test.elf: load_littleendian.s fullround.s load_test.s chacha20.o chacha20.h test.o $(OBJS) $(LDSCRIPT)
-		$(LD) -o $@ load_littleendian.s fullround.s load_test.s test.o chacha20.o $(OBJS) $(LDFLAGS) -l$(LIBNAME)
+chacha20test.elf: crypto_core.s load_test.s chacha20.o chacha20.h test.o $(OBJS) $(LDSCRIPT)
+		$(LD) -o $@ crypto_core.s load_test.s test.o chacha20.o $(OBJS) $(LDFLAGS) -l$(LIBNAME)
 
-chacha20speed.elf: load_littleendian.s fullround.s load_test.s chacha20.o chacha20.h speed.o $(OBJS) $(LDSCRIPT)
-		$(LD) -o $@ load_littleendian.s fullround.s load_test.s speed.o chacha20.o $(OBJS) $(LDFLAGS) -l$(LIBNAME)
+chacha20speed.elf: crypto_core.s load_test.s chacha20.o chacha20.h speed.o $(OBJS) $(LDSCRIPT)
+		$(LD) -o $@ crypto_core.s load_test.s speed.o chacha20.o $(OBJS) $(LDFLAGS) -l$(LIBNAME)
 
 
 include ../common/make.mk

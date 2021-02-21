@@ -41,6 +41,7 @@ cryptocore:
     rev r10, r10
     rev r11, r11
 
+    # TODO: this seems to break the program...
     stm r12!, {r4-r11}	// store in x[0] to x[7]
     stm r0!, {r4-r11}   // store in out[0] to out[7]
 
@@ -59,23 +60,91 @@ cryptocore:
     rev r11, r11
 
     stm r12!, {r4-r11}	// store in x[8] to x[15]
-    stm r0!, {r4-r11}    // store in out[8] to out[15]
+    stm r0!, {r4-r11}   // store in out[8] to out[15]
+    sub r12, #64	// reset pointer to start of xarray
+    sub r0, #64		// reset pointer to start of out
 
+
+    push {r1-r3}
+    push {r0}
+    # TODO: r12 = xarray --> assumption of doubleround
+    # ============ loop over fullround
+    # for (i = rounds; i > 0; i -= 2) fullround(x);  --> fullround is a double round here   
+
+    pop {r0}
+    push {r12}		// Temporarily store the pointer to x; this saves a round of loads.
+
+    ldm r0, {r1-r6}	// load out[0] to out[5] into r1-r6 (loads the j's)
+    ldm r12, {r7-r12}   // load x[0] to x[5] into r7-r12 
+    add r1, r7
+    add r2, r8
+    add r3, r9
+    add r4, r10
+    add r5, r11
+    add r6, r12 
+ 
+    # byte reverse the registers we got, (store_littleendian(...))
+    rev r1, r1
+    rev r2, r2
+    rev r3, r3
+    rev r4, r4
+    rev r5, r5
+    rev r6, r6
+
+    stm r0!, {r1-r6}   // store in out[0] to out[5]
+
+    pop {r12} 		// r12 = pointer to xarray 
+    ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
+    add r12, #24	// offset the pointer to x by 6 words
+    ldm r12!, {r6-r10}  // load x[6] to x[10] into r6-r10 
+
+    add r1, r7
+    add r2, r8
+    add r3, r9
+    add r4, r10
+    add r5, r11
     
+    # byte reverse the registers we got, (store_littleendian(...))
+    rev r1, r1
+    rev r2, r2
+    rev r3, r3
+    rev r4, r4
+    rev r5, r5
+
+    stm r0!, {r1-r5}   // store in out[6] to out[10]
+
+    ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
+    ldm r12!, {r6-r10}  // load x[6] to x[10] into r6-r10 
+
+    add r1, r7
+    add r2, r8
+    add r3, r9
+    add r4, r10
+    add r5, r11
     
+    # byte reverse the registers we got, (store_littleendian(...))
+    rev r1, r1
+    rev r2, r2
+    rev r3, r3
+    rev r4, r4
+    rev r5, r5
+
+    stm r0!, {r1-r5}   // store in out[6] to out[10]
     
+    # substract 64 from r0 and r12 if they are needed beyond here
+
+    mov r0, #0 		// return 0
     
     # Restore the registers before return:
+    pop {r1-r3}
     pop {r4-r11}
     pop {lr}
     bx lr 
-    
 
 
-
-fullround:
+doubleround:
     # =============== Quarter Round Somewhat more efficient implementation =====================
-    # Our function header in C: void fullround(uint32 *a);
+    # Our function header in C: void doubleround(uint32 *a);
     # r0 contains &a, pointer to first argument of the list; 15 others directly follow that address.
 
     mov r12, r0 // keep r0 around for later reference...
