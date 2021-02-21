@@ -49,10 +49,14 @@ static void freeze(unsigned int h[17])
   unsigned int horig[17];
   unsigned int j;
   unsigned int negative;
-  for (j = 0;j < 17;++j) horig[j] = h[j];
+  for (j = 0;j < 17;++j) {
+    horig[j] = h[j];
+  }
   add(h,minusp);
   negative = -(h[16] >> 7);
-  for (j = 0;j < 17;++j) h[j] ^= negative & (horig[j] ^ h[j]);
+  for (j = 0;j < 17;++j) {
+    h[j] ^= negative & (horig[j] ^ h[j]);
+  }
 }
 
 static void mulmod(unsigned int h[17],const unsigned int r[17])
