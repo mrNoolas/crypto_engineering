@@ -94,101 +94,92 @@ cryptocore:
     str r9, [r12, #52] 	// r9 = x13
     str r1, [r12, #16] 	// r1 = x4
 
-
     # Quarter round 1.3 and 1.4:
     # load everything thats still around and store some things for later    
-    # TODO: fix this order
-    ror r9, r8, #24     // r9 = x12, does rotate and move together
-    mov r8, r0          // r8 = x0
-
-    mov r1, r3		// temporarily store for swap
-    mov r3, r10  	// r3 = x14
-    ror r10, r1, #25    // r10 = x5, does rotate and move together
-
-    mov r1, r2		// temporarily store for swap
-    mov r2, r6 	        // r2 = x10
-    mov r6, r7 	        // r6 = x11
-    mov r7, r11 	// r7 = x15
-    mov r11, r1         // r11 = x1
-    
-    # use pointer to load values from memory:
-    ldr r0, [r12, #8]  	// r0 = x2
+    ldr r9, [r12, #8]  	// r9 = x2
     ldr r1, [r12, #24] 	// r1 = x6    
     ldr r4, [r12, #12] 	// r4 = x3
     ldr r5, [r12, #28] 	// r5 = x7 
 
+    // r0 = x0;  r10 = x14; r6 = x10; r7 = x11; r11 = x15; r2 = x1
+    ror r3, r3, #25    // r3 = x5, does rotate and move together
+    ror r8, r8, #24     // r8 = x12, does rotate and move together
+
     # two quarter rounds (more info in quarterround/quarterround.s)
-    add r0, r1  	        	// *a = *a + *b
+    add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
-    eor r3, r0  	        	// *d = *d ^ *a
-    eor r7, r4  		        // *d = *d ^ *a
-    add r2, r2, r3, ror #16 	// *c = *c + *d
-    add r6, r6, r7, ror #16 	// *c = *c + *d
-    eor r1, r2 		        	// *b = *b ^ c
-    eor r5, r6 			        // *b = *b ^ c
-    add r0, r0, r1, ror #20  	// *a = *a + *b
+    eor r10, r9  	        	// *d = *d ^ *a
+    eor r11, r4  		        // *d = *d ^ *a
+    add r6, r6, r10, ror #16 	// *c = *c + *d
+    add r7, r7, r11, ror #16 	// *c = *c + *d
+    eor r1, r6 		        	// *b = *b ^ c
+    eor r5, r7 			        // *b = *b ^ c
+    add r9, r9, r1, ror #20  	// *a = *a + *b
     add r4, r4, r5, ror #20  	// *a = *a + *b
-    eor r3, r0, r3, ror #16  	// *d = *d ^ a
-    eor r7, r4, r7, ror #16  	// *d = *d ^ a
-    add r2, r2, r3, ror #24	    // *c = *c + *d
-    add r6, r6, r7, ror #24	    // *c = *c + *d
-    eor r1, r2, r1, ror #20 	// *b = *b ^ c
-    eor r5, r6, r5, ror #20 	// *b = *b ^ c
+    eor r10, r9, r10, ror #16  	// *d = *d ^ a
+    eor r11, r4, r11, ror #16  	// *d = *d ^ a
+    add r6, r6, r10, ror #24	    // *c = *c + *d
+    add r7, r7, r11, ror #24	    // *c = *c + *d
+    eor r1, r6, r1, ror #20 	// *b = *b ^ c
+    eor r5, r7, r5, ror #20 	// *b = *b ^ c
     
-    # r1, r3, r5 and r7 are rotated in a move later
+    # r1, r10, r5 and r11 are rotated in a move later
 
     # swap some registers to prepare for round 2:
-    # r2 and r6 should stay where they are for round 2  (r2 = x10; r6 = x11)
-    push {r10} 		// there is no room for the entire swap, so we need to push one value...
-    mov r10, r0         // r10 = x2
-    mov r0, r8          // r0  = x0
-    ror r8, r3, #24     // r8  = x14, does rotate and move together
-    ror r3, r7, #24     // r3  = x15
-    mov r7, r9          // r7  = x12
+    // r0  = x0
+
+    ror r11, r11, #24     // r11  = x15
+    ror r5, r5, #25    // r5 = x7, does rotate and move together
+    ror r1, r1, #25     // r1  = x6
+    // r3  = x5 
+
+    push {r7}
+    mov r7, r8          // r7  = x12
+    ror r8, r10, #24    // r8  = x14, does rotate and move together
+    mov r10, r9         // r10 = x2
     mov r9, r4          // r9  = x3
-    mov r4, r11         // r4  = x1
-    ror r11, r5, #25    // r11 = x7, does rotate and move together
-    ror r5, r1, #25     // r5  = x6
-    pop {r1}            // r1  = x5
+    mov r4, r2         // r4  = x1
+    mov r2, r6		// r2 = x10
+    pop {r6}		// r6 = x11
 
     # =======================================================
     # Quarter round 2.1 and 2.2:
     # two quarter rounds (more info in quarterround/quarterround.s)
-    add r0, r1                          // *a = *a + *b
-    add r4, r5                          // *a = *a + *b
-    eor r3, r0                          // *d = *d ^ *a
+    add r0, r3                          // *a = *a + *b
+    add r4, r1                          // *a = *a + *b
+    eor r11, r0                          // *d = *d ^ *a
     eor r7, r4                          // *d = *d ^ *a
-    add r2, r2, r3, ror #16     // *c = *c + *d
+    add r2, r2, r11, ror #16     // *c = *c + *d
     add r6, r6, r7, ror #16     // *c = *c + *d
-    eor r1, r2                          // *b = *b ^ c
-    eor r5, r6                          // *b = *b ^ c
-    add r0, r0, r1, ror #20     // *a = *a + *b
-    add r4, r4, r5, ror #20     // *a = *a + *b
-    eor r3, r0, r3, ror #16     // *d = *d ^ a
+    eor r3, r2                          // *b = *b ^ c
+    eor r1, r6                          // *b = *b ^ c
+    add r0, r0, r3, ror #20     // *a = *a + *b
+    add r4, r4, r1, ror #20     // *a = *a + *b
+    eor r11, r0, r11, ror #16     // *d = *d ^ a
     eor r7, r4, r7, ror #16     // *d = *d ^ a
-    add r2, r2, r3, ror #24         // *c = *c + *d
+    add r2, r2, r11, ror #24         // *c = *c + *d
     add r6, r6, r7, ror #24         // *c = *c + *d
-    eor r1, r2, r1, ror #20     // *b = *b ^ c
-    eor r5, r6, r5, ror #20     // *b = *b ^ c
+    eor r3, r2, r3, ror #20     // *b = *b ^ c
+    eor r1, r6, r1, ror #20     // *b = *b ^ c
 
-    # r3 and r5 are rotated in the next round
-    # r1 and r7 are rotated in a move later
+    # r11 and r1 are rotated in the next round
+    # r3 and r7 are rotated in a move later
 
     # write some of the results back to memory:
     str r2, [r12, #40]  // r2 = x10
-    str r3, [r12, #60]  // r3 = x15
-    str r5, [r12, #24]  // r5 = x6
+    str r11, [r12, #60] // r3 = x15
+    str r1, [r12, #24]  // r1 = x6
     str r6, [r12, #44]  // r6 = x11 
 
     # Shift some registers around to prepare for the next round
     # In round 3.1 and 3.2 we need: x0, x1, x4, x5, x8, x9, x12 and x13
-    # We still have around: r8 = x14; r9 = x3; r10 = x2; r11 = x7 
+    # We still have around: r8 = x14; r9 = x3; r10 = x2; r5 = x7 
     mov r2, r0          // temporarily use r2 as a swap register
     mov r0, r10         // r0 = x2
     mov r10, r4         // r10 = x1
     mov r4, r9          // r4 = x3
-    ror r9, r1, #25     // r9 = x5, does rotate and move together
-    mov r1, r11         // r1 = x7
+    ror r9, r3, #25     // r9 = x5, does rotate and move together
+    mov r1, r5         // r1 = x7
     ror r11, r7, #24    // r11 = x12    
     mov r7, r8          // r7 = x14
     mov r8, r2          // r8 = x0
