@@ -14,8 +14,8 @@ extern uint32 cryptocore(
         unsigned char *out,
   const unsigned char *in,
   const unsigned char *key,
-  const unsigned char *c,
-  	uint32 *x
+  const unsigned char *c
+  //	uint32 *x
 );
 
 static uint32 load_littleendian(const unsigned char *x)
@@ -42,28 +42,28 @@ static int crypto_core_chacha20(
   const unsigned char *c
 )
 {
-  uint32 x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
+
   uint32 j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
 
-  j0  = x0  = load_littleendian(c +  0);
-  j1  = x1  = load_littleendian(c +  4);
-  j2  = x2  = load_littleendian(c +  8);
-  j3  = x3  = load_littleendian(c + 12);
-  j4  = x4  = load_littleendian(key +  0);
-  j5  = x5  = load_littleendian(key +  4);
-  j6  = x6  = load_littleendian(key +  8);
-  j7  = x7  = load_littleendian(key + 12);
-  j8  = x8  = load_littleendian(key + 16);
-  j9  = x9  = load_littleendian(key + 20);
-  j10 = x10 = load_littleendian(key + 24);
-  j11 = x11 = load_littleendian(key + 28);
-  j12 = x12 = load_littleendian(in +  8);
-  j13 = x13 = load_littleendian(in + 12);
-  j14 = x14 = load_littleendian(in +  0);
-  j15 = x15 = load_littleendian(in +  4);
+  j0  = load_littleendian(c +  0);
+  j1  = load_littleendian(c +  4);
+  j2  = load_littleendian(c +  8);
+  j3  = load_littleendian(c + 12);
+  j4  = load_littleendian(key +  0);
+  j5  = load_littleendian(key +  4);
+  j6  = load_littleendian(key +  8);
+  j7  = load_littleendian(key + 12);
+  j8  = load_littleendian(key + 16);
+  j9  = load_littleendian(key + 20);
+  j10 = load_littleendian(key + 24);
+  j11 = load_littleendian(key + 28);
+  j12 = load_littleendian(in +  8);
+  j13 = load_littleendian(in + 12);
+  j14 = load_littleendian(in +  0);
+  j15 = load_littleendian(in +  4);
 
-  uint32 x[16] = {x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15};
-  uint32 ret = cryptocore(out, in, key, c, x);
+  // uint32 x[16];
+  uint32 *x = cryptocore(out, in, key, c); //, x);
 
   x[0] += j0;
   x[1] += j1;
@@ -98,8 +98,9 @@ static int crypto_core_chacha20(
   store_littleendian(out + 52,x[13]);
   store_littleendian(out + 56,x[14]);
   store_littleendian(out + 60,x[15]);
+  
 
-  return ret;
+  return 0;
 }
 
 static const unsigned char sigma[16] = "expand 32-byte k";

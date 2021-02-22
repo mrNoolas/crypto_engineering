@@ -6,9 +6,9 @@
 # We need to allocate memory for x's, and initialise it together with the out. 
 # allocate 16 uint32's: 16*4 = 64 bytes (block size)
 # No need to initialise, this is done later together with the j's / out array
-#.data
-#xarray: .skip 16*4
-#.text
+.data
+xarray: .skip 16*4
+.text
 
 .type  cryptocore, %function
 cryptocore:
@@ -24,9 +24,8 @@ cryptocore:
     push {r4-r11}
 
     # r12 = *x
-    ldr r12, [sp, #32]
-    //movw r12, #:lower16:xarray
-    //movt r12, #:upper16:xarray
+    movw r12, #:lower16:xarray
+    movt r12, #:upper16:xarray
 
     # instead of using 16 separate j's as in the example, we write directly to out to save memory operations
     ldm r3, {r4-r7} 	// load c[0], c[1], c[2], c[3] into r4 to r7
@@ -70,10 +69,6 @@ cryptocore:
     
     
     pop {r0}        // restore pointer to out
-    
-    mov r0, #65 		// return A
-    pop {r4-r11}        // Restore registers before return
-    bx lr
 
     ldm r0, {r1-r6}	// load out[0] to out[5] into r1-r6 (loads the j's)
     ldm r12, {r7-r12}   // load x[0] to x[5] into r7-r12 
@@ -84,18 +79,12 @@ cryptocore:
     add r5, r11
     add r6, r12 
  
-    # byte reverse the registers we got, (store_littleendian(...))
-    rev r1, r1
-    rev r2, r2
-    rev r3, r3
-    rev r4, r4
-    rev r5, r5
-    rev r6, r6
-
     stm r0!, {r1-r6}   // store in out[0] to out[5]
 
-    // TODO: fix, use correct loading of the label
-    // adr r12, xarray    // restore the pointer to x
+    # r12 = *x
+    movw r12, #:lower16:xarray
+    movt r12, #:upper16:xarray
+    
     ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
     add r12, #24	   // offset the pointer to x by 6 words
     ldm r12!, {r6-r10} // load x[6] to x[10] into r6-r10 
@@ -106,13 +95,6 @@ cryptocore:
     add r4, r10
     add r5, r11
     
-    # byte reverse the registers we got, (store_littleendian(...))
-    rev r1, r1
-    rev r2, r2
-    rev r3, r3
-    rev r4, r4
-    rev r5, r5
-
     stm r0!, {r1-r5}   // store in out[6] to out[10]
 
     ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
@@ -123,22 +105,15 @@ cryptocore:
     add r3, r9
     add r4, r10
     add r5, r11
-    
-    # byte reverse the registers we got, (store_littleendian(...))
-    rev r1, r1
-    rev r2, r2
-    rev r3, r3
-    rev r4, r4
-    rev r5, r5
 
     stm r0!, {r1-r5}   // store in out[10] to out[15]
     
     # substract 64 from r0 and r12 if they are needed beyond here
-
-    mov r0, #65 		// return A
+    sub r12, #64
+    
+    mov r0, r12 		// return x
     pop {r4-r11}        // Restore registers before return
     bx lr
-    
 
 
 

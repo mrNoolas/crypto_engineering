@@ -1,25 +1,26 @@
-# ===================================================================================================
-    push {lr}
-    //stm r12, {r4-r11}
-    //sub r12, #32
-    
-    bl doubleround
-    bl doubleround
-    bl doubleround
-    bl doubleround
-    bl doubleround
 
-    bl doubleround
-    bl doubleround
-    bl doubleround
-    bl doubleround
-    bl doubleround
+
+    # byte reverse the registers we got, (store_littleendian(...))
+    rev r1, r1
+    rev r2, r2
+    rev r3, r3
+    rev r4, r4
+    rev r5, r5
+    rev r6, r6
+
+    # byte reverse the registers we got, (store_littleendian(...))
+    rev r1, r1
+    rev r2, r2
+    rev r3, r3
+    rev r4, r4
+    rev r5, r5
     
-    pop {lr}
-    # ===================================================================================================
-    
-    
-    
+     # byte reverse the registers we got, (store_littleendian(...))
+    rev r1, r1
+    rev r2, r2
+    rev r3, r3
+    rev r4, r4
+    rev r5, r5  
     
 # ===================================================================================================
     # Start of 20 rounds
