@@ -47,8 +47,17 @@ int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const 
   for (i = 0; i < 8; ++i) in[i] = nonce[i];
   for (i = 8; i < 16; ++i) in[i] = 0;
 
+    /*
+    unsigned char r = cryptocore(out, in, keyCopy, sigma);
+    unsigned char b[2] = {r, '\0'};
+    send_USART_str(b); //*/
+
   while (outLen >= 64) {
-    cryptocore(out, in, keyCopy, sigma);
+    //*
+    unsigned char r = cryptocore(out, in, keyCopy, sigma);
+    unsigned char b[2] = {r, '\0'};
+    send_USART_str(b); //*/
+    //cryptocore(out, in, keyCopy, sigma);
 
     u = 1;
     for (i = 8; i < 16; ++i) {
