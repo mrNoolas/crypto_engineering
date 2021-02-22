@@ -31,46 +31,27 @@ cryptocore:
     # instead of using 16 separate j's as in the example, we write directly to out to save memory operations
     ldm r3, {r4-r7} 	// load c[0], c[1], c[2], c[3] into r4 to r7
     ldm r2!, {r8-r11}    // load key[0], ..., key[3] into r8 to r11 
-    
-    # byte reverse the registers we got, (load_littleendian(...))
-    rev r4, r4
-    rev r5, r5
-    rev r6, r6
-    rev r7, r7
-    rev r8, r8
-    rev r9, r9
-    rev r10, r10
-    rev r11, r11
 
-    //stm r12!, {r4-r11}	// store in x[0] to x[7]
-    //stm r0!, {r4-r11}   // store in out[0] to out[7]
+    stm r12!, {r4-r11}	// store in x[0] to x[7]
+    stm r0!, {r4-r11}   // store in out[0] to out[7]
 
     ldm r2, {r4-r7}	    // load key[4], ..., key[7] into r4 to r7
-    ldm r1, {r8-r11}    // load in[0], ..., in[3] into r8 to r11
-    sub r2, #16		    // reset pointer to start of key
-    
-    # byte reverse the registers we got, (load_littleendian(...))
-    # TODO: rev and load directly into useful register
-    rev r4, r4
-    rev r5, r5
-    rev r6, r6
-    rev r7, r7
-    rev r8, r8
-    rev r9, r9
-    rev r10, r10
-    rev r11, r11
+    ldr r10, [r1]       // r10 = in + 0
+    ldr r11, [r1, #4]   // r11 = in + 4
+    ldr r8, [r1, #8]    // r8  = in + 8
+    ldr r9, [r1, #12]   // r9  = in + 12
 
     # only store in out; for x it is moved directly into the rounds.
-    //stm r0, {r4-r11}   // store in out[8] to out[15]
-    //sub r0, #32		// reset pointer to start of out
+    stm r0, {r4-r11}   // store in out[8] to out[15]
+    sub r0, #32		// reset pointer to start of out
    
     //push {r1-r3} # r1 to r3 are not needed anymore, so can be overwritten.    
     push {r0}
     
     # ===================================================================================================
     push {lr}
-    //stm r12, {r4-r11}
-    //sub r12, #32
+    stm r12, {r4-r11}
+    sub r12, #32
     
     bl doubleround
     bl doubleround

@@ -63,7 +63,7 @@ static int crypto_core_chacha20(
   j15 = x15 = load_littleendian(in +  4);
 
   uint32 x[16] = {x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15};
-  cryptocore(out, in, key, c, x);
+  uint32 ret = cryptocore(out, in, key, c, x);
 
   x[0] += j0;
   x[1] += j1;
@@ -99,7 +99,7 @@ static int crypto_core_chacha20(
   store_littleendian(out + 56,x[14]);
   store_littleendian(out + 60,x[15]);
 
-  return 0;
+  return ret;
 }
 
 static const unsigned char sigma[16] = "expand 32-byte k";
