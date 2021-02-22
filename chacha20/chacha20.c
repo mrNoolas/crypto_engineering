@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include "chacha20.h"
+#include "../common/stm32wrapper.h"
 
 #define ROUNDS 20
 
@@ -13,8 +14,93 @@ extern uint32 cryptocore(
         unsigned char *out,
   const unsigned char *in,
   const unsigned char *key,
-  const unsigned char *c
+  const unsigned char *c,
+  	uint32 *x
 );
+
+static uint32 load_littleendian(const unsigned char *x)
+{
+  return
+      (uint32) (x[0]) \
+  | (((uint32) (x[1])) << 8) \
+  | (((uint32) (x[2])) << 16) \
+  | (((uint32) (x[3])) << 24);
+}
+
+static void store_littleendian(unsigned char *x,uint32 u)
+{
+  x[0] = u; u >>= 8;
+  x[1] = u; u >>= 8;
+  x[2] = u; u >>= 8;
+  x[3] = u;
+}
+
+static int crypto_core_chacha20(
+        unsigned char *out,
+  const unsigned char *in,
+  const unsigned char *key,
+  const unsigned char *c
+)
+{
+  uint32 x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
+  uint32 j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
+
+  j0  = x0  = load_littleendian(c +  0);
+  j1  = x1  = load_littleendian(c +  4);
+  j2  = x2  = load_littleendian(c +  8);
+  j3  = x3  = load_littleendian(c + 12);
+  j4  = x4  = load_littleendian(key +  0);
+  j5  = x5  = load_littleendian(key +  4);
+  j6  = x6  = load_littleendian(key +  8);
+  j7  = x7  = load_littleendian(key + 12);
+  j8  = x8  = load_littleendian(key + 16);
+  j9  = x9  = load_littleendian(key + 20);
+  j10 = x10 = load_littleendian(key + 24);
+  j11 = x11 = load_littleendian(key + 28);
+  j12 = x12 = load_littleendian(in +  8);
+  j13 = x13 = load_littleendian(in + 12);
+  j14 = x14 = load_littleendian(in +  0);
+  j15 = x15 = load_littleendian(in +  4);
+
+  uint32 x[16] = {x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15};
+  cryptocore(out, in, key, c, x);
+
+  x[0] += j0;
+  x[1] += j1;
+  x[2] += j2;
+  x[3] += j3;
+  x[4] += j4;
+  x[5] += j5;
+  x[6] += j6;
+  x[7] += j7;
+  x[8] += j8;
+  x[9] += j9;
+  x[10] += j10;
+  x[11] += j11;
+  x[12] += j12;
+  x[13] += j13;
+  x[14] += j14;
+  x[15] += j15;
+
+  store_littleendian(out + 0,x[0]);
+  store_littleendian(out + 4,x[1]);
+  store_littleendian(out + 8,x[2]);
+  store_littleendian(out + 12,x[3]);
+  store_littleendian(out + 16,x[4]);
+  store_littleendian(out + 20,x[5]);
+  store_littleendian(out + 24,x[6]);
+  store_littleendian(out + 28,x[7]);
+  store_littleendian(out + 32,x[8]);
+  store_littleendian(out + 36,x[9]);
+  store_littleendian(out + 40,x[10]);
+  store_littleendian(out + 44,x[11]);
+  store_littleendian(out + 48,x[12]);
+  store_littleendian(out + 52,x[13]);
+  store_littleendian(out + 56,x[14]);
+  store_littleendian(out + 60,x[15]);
+
+  return 0;
+}
 
 static const unsigned char sigma[16] = "expand 32-byte k";
 
@@ -54,7 +140,7 @@ int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const 
 
   while (outLen >= 64) {
     //*
-    unsigned char r = cryptocore(out, in, keyCopy, sigma);
+    unsigned char r = crypto_core_chacha20(out, in, keyCopy, sigma);
     unsigned char b[2] = {r, '\0'};
     send_USART_str(b); //*/
     //cryptocore(out, in, keyCopy, sigma);
@@ -71,7 +157,7 @@ int crypto_stream_chacha20(unsigned char *out, unsigned long long outLen, const 
   }
 
   if (outLen) {
-    cryptocore(block, in, keyCopy, sigma);
+    crypto_core_chacha20(block, in, keyCopy, sigma);
     for (i = 0; i < outLen; ++i) out[i] = block[i];
   }
   return 0;

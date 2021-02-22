@@ -6,9 +6,9 @@
 # We need to allocate memory for x's, and initialise it together with the out. 
 # allocate 16 uint32's: 16*4 = 64 bytes (block size)
 # No need to initialise, this is done later together with the j's / out array
-.data
-xarray: .skip 16*4
-.text
+#.data
+#xarray: .skip 16*4
+#.text
 
 .type  cryptocore, %function
 cryptocore:
@@ -24,8 +24,9 @@ cryptocore:
     push {r4-r11}
 
     # r12 = *x
-    movw r12, #:lower16:xarray
-    movt r12, #:upper16:xarray
+    ldr r12, [sp, #32]
+    //movw r12, #:lower16:xarray
+    //movt r12, #:upper16:xarray
 
     # instead of using 16 separate j's as in the example, we write directly to out to save memory operations
     ldm r3, {r4-r7} 	// load c[0], c[1], c[2], c[3] into r4 to r7
@@ -41,8 +42,8 @@ cryptocore:
     rev r10, r10
     rev r11, r11
 
-    stm r12!, {r4-r11}	// store in x[0] to x[7]
-    stm r0!, {r4-r11}   // store in out[0] to out[7]
+    //stm r12!, {r4-r11}	// store in x[0] to x[7]
+    //stm r0!, {r4-r11}   // store in out[0] to out[7]
 
     ldm r2, {r4-r7}	    // load key[4], ..., key[7] into r4 to r7
     ldm r1, {r8-r11}    // load in[0], ..., in[3] into r8 to r11
@@ -60,18 +61,27 @@ cryptocore:
     rev r11, r11
 
     # only store in out; for x it is moved directly into the rounds.
-    stm r0, {r4-r11}   // store in out[8] to out[15]
-    sub r0, #32		// reset pointer to start of out
-
-
-    //push {r1-r3} # r1 to r3 are not needed anymore, so can be overwritten.
+    //stm r0, {r4-r11}   // store in out[8] to out[15]
+    //sub r0, #32		// reset pointer to start of out
+   
+    //push {r1-r3} # r1 to r3 are not needed anymore, so can be overwritten.    
     push {r0}
     
     # ===================================================================================================
     push {lr}
-    stm r12, {r4-r11}
-    sub r12, #32
+    //stm r12, {r4-r11}
+    //sub r12, #32
     
+    bl doubleround
+    bl doubleround
+    bl doubleround
+    bl doubleround
+    bl doubleround
+
+    bl doubleround
+    bl doubleround
+    bl doubleround
+    bl doubleround
     bl doubleround
     
     pop {lr}
@@ -79,10 +89,11 @@ cryptocore:
     
     
     pop {r0}        // restore pointer to out
+    
     mov r0, #65 		// return A
     pop {r4-r11}        // Restore registers before return
     bx lr
-    
+
     ldm r0, {r1-r6}	// load out[0] to out[5] into r1-r6 (loads the j's)
     ldm r12, {r7-r12}   // load x[0] to x[5] into r7-r12 
     add r1, r7
@@ -102,7 +113,8 @@ cryptocore:
 
     stm r0!, {r1-r6}   // store in out[0] to out[5]
 
-    adr r12, xarray    // restore the pointer to x
+    // TODO: fix, use correct loading of the label
+    // adr r12, xarray    // restore the pointer to x
     ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
     add r12, #24	   // offset the pointer to x by 6 words
     ldm r12!, {r6-r10} // load x[6] to x[10] into r6-r10 
@@ -155,7 +167,7 @@ doubleround:
     # Our function header in C: void doubleround(uint32 *a);
     # r0 contains &a, pointer to first argument of the list; 15 others directly follow that address.
     
-    mov r12, r0 // store *x in r12
+    //mov r12, r0 // store *x in r12
 
     # Quarter round 1.1 and 1.2:
     # use pointer to load values from memory:
@@ -349,9 +361,6 @@ doubleround:
     str r6, [r12, #36] 	// r6 = x9
     str r7, [r12, #56] 	// r7 = x14
 
-
-    # Finally, we restore the callee-saved register values and branch back.
-    pop {r4-r7}
     bx lr
 
 
