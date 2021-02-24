@@ -52,59 +52,64 @@ cryptocore:
     # r4 = x8, r5 = x9, r6 = x10, r7= x11, r8 = x12, r9 = x13, r10 = x14, r11 = x15 
     
     # store and use some other values we have around now anyway to save loads and stores
-    // r10 = x14
-    // r11 = x15
-    mov r2, r4          // r2 = x8
-    mov r3, r8 	        // r3 = x12  
-    mov r8, r7          // r8 = x11  store for later use 
-    mov r7, r9 	        // r7 = x13 
-    mov r9, r6          // r9 = x10  store for later use  
-    mov r6, r5 	        // r6 = x9  
+    // r10 = x14 store for later use
+    // r11 = x15 store for later use
+    // c1 = r4 = x8
+    // d1 = r8 = x12  
+    // r7 = x11  store for later use 
+    // d2 = r9 = x13 
+    // r6 = x10  store for later use  
+    // c2 = r5 = x9  
     
     # Quarter round 1.1 and 1.2:
     # use pointer to load values from memory:
-    ldr r0, [r12]    	// r0 = x0
-    ldr r1, [r12, #16] 	// r1 = x4
-    ldr r4, [r12, #4]  	// r4 = x1
-    ldr r5, [r12, #20] 	// r5 = x5
+    ldr r0, [r12]    	// a1 = r0 = x0
+    ldr r1, [r12, #16] 	// b1 = r1 = x4
+    ldr r2, [r12, #4]  	// a2 = r2 = x1
+    ldr r3, [r12, #20] 	// b2 = r3 = x5
 
     # two quarter rounds (more info in quarterround/quarterround.s)
     add r0, r1  	        	// *a = *a + *b
-    add r4, r5  		        // *a = *a + *b
-    eor r3, r0  	        	// *d = *d ^ *a
-    eor r7, r4  		        // *d = *d ^ *a
-    add r2, r2, r3, ror #16 	// *c = *c + *d
-    add r6, r6, r7, ror #16 	// *c = *c + *d
-    eor r1, r2 		        	// *b = *b ^ c
-    eor r5, r6 			        // *b = *b ^ c
+    add r2, r3  		        // *a = *a + *b
+    eor r8, r0  	        	// *d = *d ^ *a
+    eor r9, r2  		        // *d = *d ^ *a
+    add r4, r4, r8, ror #16 	// *c = *c + *d
+    add r5, r5, r9, ror #16 	// *c = *c + *d
+    eor r1, r4 		        	// *b = *b ^ c
+    eor r3, r5 			        // *b = *b ^ c
     add r0, r0, r1, ror #20  	// *a = *a + *b
-    add r4, r4, r5, ror #20  	// *a = *a + *b
-    eor r3, r0, r3, ror #16  	// *d = *d ^ a
-    eor r7, r4, r7, ror #16  	// *d = *d ^ a
-    add r2, r2, r3, ror #24	    // *c = *c + *d
-    add r6, r6, r7, ror #24	    // *c = *c + *d
-    eor r1, r2, r1, ror #20 	// *b = *b ^ c
-    eor r5, r6, r5, ror #20 	// *b = *b ^ c
+    add r2, r2, r3, ror #20  	// *a = *a + *b
+    eor r8, r0, r8, ror #16  	// *d = *d ^ a
+    eor r9, r2, r9, ror #16  	// *d = *d ^ a
+    add r4, r4, r8, ror #24	    // *c = *c + *d
+    add r5, r5, r9, ror #24	    // *c = *c + *d
+    eor r1, r4, r1, ror #20 	// *b = *b ^ c
+    eor r3, r5, r3, ror #20 	// *b = *b ^ c
     
-    # r1 and r7 (x4, x13) are rotated in the next round
-    # r3 and r5 are rotated in a move later
+    # r1 and r9 (x4, x13) are rotated in the next round
+    # r8 and r3 are rotated in a move later
     # write some of the results back to memory:
-    str r2, [r12, #32] 	// r2 = x8
-    str r6, [r12, #36] 	// r6 = x9
-    str r7, [r12, #52] 	// r7 = x13
+    str r4, [r12, #32] 	// r4 = x8
+    str r5, [r12, #36] 	// r5 = x9
+    str r9, [r12, #52] 	// r9 = x13
     str r1, [r12, #16] 	// r1 = x4
 
 
     # Quarter round 1.3 and 1.4:
     # load everything thats still around and store some things for later    
-    mov r2, r9 	        // r2 = x10
-    ror r9, r3, #24     // r9 = x12, does rotate and move together
-    mov r3, r10  	// r3 = x14
-    mov r6, r8 	        // r6 = x11
-    mov r7, r11 	// r7 = x15
+    # TODO: fix this order
+    ror r9, r8, #24     // r9 = x12, does rotate and move together
     mov r8, r0          // r8 = x0
-    ror r10, r5, #25    // r10 = x5, does rotate and move together
-    mov r11, r4         // r11 = x1
+
+    mov r1, r3		// temporarily store for swap
+    mov r3, r10  	// r3 = x14
+    ror r10, r1, #25    // r10 = x5, does rotate and move together
+
+    mov r1, r2		// temporarily store for swap
+    mov r2, r6 	        // r2 = x10
+    mov r6, r7 	        // r6 = x11
+    mov r7, r11 	// r7 = x15
+    mov r11, r1         // r11 = x1
     
     # use pointer to load values from memory:
     ldr r0, [r12, #8]  	// r0 = x2
