@@ -1394,20 +1394,20 @@ cryptocore:
     
     ror r1, r1, #25     // TODO: merge this into the calculating instructions
 
-    add r0, r1  	        	// *a = *a + *b
-    add r4, r5  		        // *a = *a + *b
-    eor r3, r0  	        	// *d = *d ^ *a
+    add r0, r1 	        	// *a = *a + *b
+    add r4, r5 		        // *a = *a + *b
+    eor r3, r0 	        	// *d = *d ^ *a
     eor r7, r4, r7, ror #24     // *d = *d ^ *a and does rotate of x15
     add r2, r2, r3, ror #16 	// *c = *c + *d
     add r6, r6, r7, ror #16 	// *c = *c + *d
-    eor r1, r2 		        	// *b = *b ^ c
-    eor r5, r6 			        // *b = *b ^ c
+    eor r1, r2	        	// *b = *b ^ c
+    eor r5, r6 		        // *b = *b ^ c
     add r0, r0, r1, ror #20  	// *a = *a + *b
     add r4, r4, r5, ror #20  	// *a = *a + *b
     eor r3, r0, r3, ror #16  	// *d = *d ^ a
     eor r7, r4, r7, ror #16  	// *d = *d ^ a
-    add r2, r2, r3, ror #24	    // *c = *c + *d
-    add r6, r6, r7, ror #24	    // *c = *c + *d
+    add r2, r2, r3, ror #24	// *c = *c + *d
+    add r6, r6, r7, ror #24	// *c = *c + *d
     eor r1, r2, r1, ror #20 	// *b = *b ^ c
     eor r5, r6, r5, ror #20 	// *b = *b ^ c
     push {r0}           // There is not enough registers for the entire swap, so push one register for the swap.
@@ -1442,7 +1442,7 @@ cryptocore:
     eor r1, r2, r1, ror #20 	// *b = *b ^ c
     eor r5, r6, r5, ror #20 	// *b = *b ^ c
     
-    # TODO: r3 and r5 are rotated in the next round 
+    # rotate r3 and r5 before writing final result
     ror r3, r3, #24
     ror r5, r5, #25
     
@@ -1483,38 +1483,36 @@ cryptocore:
     eor r1, r2, r1, ror #20 	// *b = *b ^ c
     eor r5, r6, r5, ror #20 	// *b = *b ^ c
     
-    // ==========================
-    // ==========================
-    // Store values for known continuation:
-
+    // Rotate before storage
     ror r1, r1, #25
-    ror r5, r5, #25
+    // r5 is rotated later
     ror r3, r3, #24
     ror r7, r7, #24
+    
+    # ===================================================================================================
 
     # write the results back to memory:
-    str r0, [r12, #8]  	// r0 = x2
     str r1, [r12, #28] 	// r1 = x7
     str r2, [r12, #32] 	// r2 = x8
     str r3, [r12, #52] 	// r3 = x13
     
-    str r4, [r12, #12] 	// r4 = x3
-    str r5, [r12, #16] 	// r5 = x4
     str r6, [r12, #36] 	// r6 = x9
     str r7, [r12, #56] 	// r7 = x14
 
-    str r8, [r12, #0]   // r8 = x0
     str r9, [r12, #20]  // r9 = x5
-    str r10, [r12, #4]  // r10 = x1
     str r11, [r12, #48] // r11 = x12
+   
+    // load x[0] to x[4] into r6-r10; used for calculation of final results later. Moving saves loads and stores to ram
+    mov r6, r8		// r6 = x0
+    mov r7, r10		// r7 = x1
+    mov r8, r0		// r8 = x2
+    mov r9, r4		// r9 = x3
+    ror r10, r5, #25	// r10 = x4  Does rotate that still had to happen for the last round
 
-    # ===================================================================================================
-    
-    
-    pop {r0}        // restore pointer to out
+    pop {r0}        	// restore pointer to out
 
     ldm r0, {r1-r5}	// load out[0] to out[4] into r1-r5 (loads the j's)
-    ldm r12!, {r6-r10}   // load x[0] to x[4] into r6-r10 
+
     add r1, r6
     add r2, r7
     add r3, r8
@@ -1524,6 +1522,7 @@ cryptocore:
     stm r0!, {r1-r5}   // store in out[0] to out[4]
     
     ldm r0, {r1-r5}    // load out[5] to out[9] into r1-r5
+    add r12, #20
     ldm r12!, {r6-r10} 	// load x[5] to x[9] into r6-r10 
 
     add r1, r6
