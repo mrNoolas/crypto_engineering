@@ -196,7 +196,7 @@ cryptocore:
     ldr r5, [r12, #16]  // r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36]  // r6 = x9
 
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
 
     # two quarter rounds (more info in quarterround/quarterround.s)
     add r0, r1                          // *a = *a + *b
@@ -284,7 +284,7 @@ cryptocore:
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
     
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
 
     # two quarter rounds (more info in quarterround/quarterround.s)
     add r0, r1  	        	// *a = *a + *b
@@ -370,8 +370,8 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
+
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
 
     # two quarter rounds (more info in quarterround/quarterround.s)
     add r0, r1  	        	// *a = *a + *b
@@ -443,9 +443,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -509,9 +507,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -578,9 +574,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -645,9 +639,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -714,9 +706,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -781,9 +771,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -850,9 +838,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -917,9 +903,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -986,9 +970,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -1053,9 +1035,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -1121,9 +1101,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -1188,9 +1166,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -1256,9 +1232,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0  	        	// *d = *d ^ *a
@@ -1323,9 +1297,7 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
@@ -1391,9 +1363,7 @@ cryptocore:
     ldr r2, [r12, #40]  // r2 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
-    
-    ror r1, r1, #25     // TODO: merge this into the calculating instructions
-
+    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
     add r0, r1 	        	// *a = *a + *b
     add r4, r5 		        // *a = *a + *b
     eor r3, r0 	        	// *d = *d ^ *a
@@ -1463,23 +1433,21 @@ cryptocore:
     ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
     ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    
-    ror r5, r5, #25     // TODO: merge this into the calculating instructions
-
-    add r0, r1  	        	// *a = *a + *b
-    add r4, r5  		        // *a = *a + *b
+    ror r5, r5, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    add r0, r1  	      	// *a = *a + *b
+    add r4, r5                  // *a = *a + *b
     eor r3, r0, r3, ror #24   	// *d = *d ^ *a
     eor r7, r4                  // *d = *d ^ *a
     add r2, r2, r3, ror #16 	// *c = *c + *d
     add r6, r6, r7, ror #16 	// *c = *c + *d
-    eor r1, r2 		        	// *b = *b ^ c
-    eor r5, r6 			        // *b = *b ^ c
+    eor r1, r2 		      	// *b = *b ^ c
+    eor r5, r6 		        // *b = *b ^ c
     add r0, r0, r1, ror #20  	// *a = *a + *b
     add r4, r4, r5, ror #20  	// *a = *a + *b
     eor r3, r0, r3, ror #16  	// *d = *d ^ a
     eor r7, r4, r7, ror #16  	// *d = *d ^ a
-    add r2, r2, r3, ror #24	    // *c = *c + *d
-    add r6, r6, r7, ror #24	    // *c = *c + *d
+    add r2, r2, r3, ror #24	// *c = *c + *d
+    add r6, r6, r7, ror #24	// *c = *c + *d
     eor r1, r2, r1, ror #20 	// *b = *b ^ c
     eor r5, r6, r5, ror #20 	// *b = *b ^ c
     
@@ -1510,7 +1478,6 @@ cryptocore:
     ror r10, r5, #25	// r10 = x4  Does rotate that still had to happen for the last round
 
     pop {r0}        	// restore pointer to out
-
     ldm r0, {r1-r5}	// load out[0] to out[4] into r1-r5 (loads the j's)
 
     add r1, r6
@@ -1533,7 +1500,7 @@ cryptocore:
     
     stm r0!, {r1-r5}   // store in out[5] to out[9]
 
-    ldm r12!, {r1-r6}     // load x[10] to x[15] into r1-r6 
+    ldm r12, {r1-r6}     // load x[10] to x[15] into r1-r6 
     ldm r0, {r7-r12}    // load out[10] to out[15] into r7-r12
 
     add r1, r7
@@ -1543,11 +1510,11 @@ cryptocore:
     add r5, r11
     add r6, r12
 
-    stm r0!, {r1-r6}   // store in out[10] to out[15]
+    stm r0, {r1-r6}   // store in out[10] to out[15]
     
     # substract 64 from r0 and r12 if they are needed beyond here
     
-    mov r0, #0	 	// return 0
+    // The return value isn't used, so no need mov r0, #0	 	// return 0
     pop {r4-r11}        // Restore registers before return
     bx lr
 
