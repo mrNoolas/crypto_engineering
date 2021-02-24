@@ -31,7 +31,7 @@ cryptocore:
     ldm r3, {r4-r7} 	// load c[0], c[1], c[2], c[3] into r4 to r7
     ldm r2!, {r8-r11}    // load key[0], ..., key[3] into r8 to r11 
 
-    stm r12!, {r4-r11}	// store in x[0] to x[7]
+    stm r12, {r4-r11}	// store in x[0] to x[7]
     stm r0!, {r4-r11}   // store in out[0] to out[7]
 
     ldm r2, {r4-r7}	    // load key[4], ..., key[7] into r4 to r7
@@ -48,12 +48,205 @@ cryptocore:
     push {r0}
     
     # ===================================================================================================
-    push {lr}
-    stm r12, {r4-r11}
-    sub r12, #32
+    # Start of 20 rounds
     
-    bl doubleround
-    bl doubleround
+    # store and use some other values we have around now anyway to save loads and stores
+    // r10 = x14
+    // r11 = x15
+    mov r2, r4          // r2 = x8
+    mov r3, r8 	        // r3 = x12  
+    mov r8, r7          // r8 = x11  store for later use 
+    mov r6, r5 	        // r6 = x9  
+    mov r7, r9 	        // r7 = x13 
+    mov r9, r6          // r9 = x10  store for later use  
+    
+    # Quarter round 1.1 and 1.2:
+    # use pointer to load values from memory:
+    ldr r0, [r12]    	// r0 = x0
+    ldr r1, [r12, #16] 	// r1 = x4
+    ldr r4, [r12, #4]  	// r4 = x1
+    ldr r5, [r12, #20] 	// r5 = x5
+
+    # two quarter rounds (more info in quarterround/quarterround.s)
+    add r0, r1  	        	// *a = *a + *b
+    add r4, r5  		        // *a = *a + *b
+    eor r3, r0  	        	// *d = *d ^ *a
+    eor r7, r4  		        // *d = *d ^ *a
+    add r2, r2, r3, ror #16 	// *c = *c + *d
+    add r6, r6, r7, ror #16 	// *c = *c + *d
+    eor r1, r2 		        	// *b = *b ^ c
+    eor r5, r6 			        // *b = *b ^ c
+    add r0, r0, r1, ror #20  	// *a = *a + *b
+    add r4, r4, r5, ror #20  	// *a = *a + *b
+    eor r3, r0, r3, ror #16  	// *d = *d ^ a
+    eor r7, r4, r7, ror #16  	// *d = *d ^ a
+    add r2, r2, r3, ror #24	    // *c = *c + *d
+    add r6, r6, r7, ror #24	    // *c = *c + *d
+    eor r1, r2, r1, ror #20 	// *b = *b ^ c
+    eor r5, r6, r5, ror #20 	// *b = *b ^ c
+    
+    # r1 and r7 are rotated in the next round
+    # r3 and r5 are rotated in a move later
+    # write some of the results back to memory:
+    str r2, [r12, #32] 	// r2 = x8
+    str r6, [r12, #36] 	// r6 = x9
+    
+    str r7, [r12, #52] 	// r7 = x13
+    str r1, [r12, #16] 	// r1 = x4
+
+
+    # Quarter round 1.3 and 1.4:
+    # load everything thats still around and store some things for later    
+    mov r2, r9 	        // r2 = x10
+    ror r9, r3, #24     // r9 = x12, does rotate and move together
+    mov r3, r10  	    // r3 = x14
+    mov r6, r8 	        // r6 = x11
+    mov r7, r11 	    // r7 = x15
+    mov r8, r0          // r8 = x0
+    ror r10, r5, #25    // r10 = x5, does rotate and move together
+    mov r11, r4         // r11 = x1
+    
+    # use pointer to load values from memory:
+    ldr r0, [r12, #8]  	// r0 = x2
+    ldr r1, [r12, #24] 	// r1 = x6    
+    ldr r4, [r12, #12] 	// r4 = x3
+    ldr r5, [r12, #28] 	// r5 = x7 
+
+    # two quarter rounds (more info in quarterround/quarterround.s)
+    add r0, r1  	        	// *a = *a + *b
+    add r4, r5  		        // *a = *a + *b
+    eor r3, r0  	        	// *d = *d ^ *a
+    eor r7, r4  		        // *d = *d ^ *a
+    add r2, r2, r3, ror #16 	// *c = *c + *d
+    add r6, r6, r7, ror #16 	// *c = *c + *d
+    eor r1, r2 		        	// *b = *b ^ c
+    eor r5, r6 			        // *b = *b ^ c
+    add r0, r0, r1, ror #20  	// *a = *a + *b
+    add r4, r4, r5, ror #20  	// *a = *a + *b
+    eor r3, r0, r3, ror #16  	// *d = *d ^ a
+    eor r7, r4, r7, ror #16  	// *d = *d ^ a
+    add r2, r2, r3, ror #24	    // *c = *c + *d
+    add r6, r6, r7, ror #24	    // *c = *c + *d
+    eor r1, r2, r1, ror #20 	// *b = *b ^ c
+    eor r5, r6, r5, ror #20 	// *b = *b ^ c
+    
+    # r1, r3, r5 and r7 are rotated in a move later
+
+    # swap some registers to prepare for round 2:
+    # r2 and r6 should stay where they are for round 2  (r2 = x10; r6 = x11)
+    mov r1, r10         // r1  = x5
+    mov r10, r0         // r10 = x2
+    mov r0, r8          // r0  = x0
+    ror r8, r3, #24     // r8  = x14, does rotate and move together
+    ror r3, r7, #24     // r3  = x15
+    mov r7, r9          // r7  = x12
+    mov r9, r4          // r9  = x3
+    mov r4, r11         // r4  = x1
+    ror r11, r5, #25    // r11 = x7, does rotate and move together
+    ror r5, r1, #25     // r5  = x6
+    
+    # =======================================================
+    # Quarter round 2.1 and 2.2:
+    # two quarter rounds (more info in quarterround/quarterround.s)
+    add r0, r1  	        	// *a = *a + *b
+    add r4, r5  		        // *a = *a + *b
+    eor r3, r0  	        	// *d = *d ^ *a
+    eor r7, r4  		        // *d = *d ^ *a
+    add r2, r2, r3, ror #16 	// *c = *c + *d
+    add r6, r6, r7, ror #16 	// *c = *c + *d
+    eor r1, r2 		        	// *b = *b ^ c
+    eor r5, r6 			        // *b = *b ^ c
+    add r0, r0, r1, ror #20  	// *a = *a + *b
+    add r4, r4, r5, ror #20  	// *a = *a + *b
+    eor r3, r0, r3, ror #16  	// *d = *d ^ a
+    eor r7, r4, r7, ror #16  	// *d = *d ^ a
+    add r2, r2, r3, ror #24	    // *c = *c + *d
+    add r6, r6, r7, ror #24	    // *c = *c + *d
+    eor r1, r2, r1, ror #20 	// *b = *b ^ c
+    eor r5, r6, r5, ror #20 	// *b = *b ^ c
+    
+    # r3 and r5 are rotated in the next round
+    # r1 and r7 are rotated in a move later
+    
+    # write some of the results back to memory:
+    str r2, [r12, #40] 	// r2 = x10
+    str r3, [r12, #60] 	// r3 = x15
+    str r5, [r12, #24] 	// r5 = x6
+    str r6, [r12, #44] 	// r6 = x11 
+    
+    # Shift some registers around to prepare for the next round
+    # In round 3.1 and 3.2 we need: x0, x1, x4, x5, x8, x9, x12 and x13
+    # We still have around: r8 = x14; r9 = x3; r10 = x2; r11 = x7 
+    mov r2, r0          // temporarily use r2 as a swap register
+    mov r0, r10         // r0 = x2
+    mov r10, r4         // r10 = x1
+    mov r4, r9          // r4 = x3
+    ror r9, r1, #25     // r9 = x5, does rotate and move together
+    mov r1, r11         // r1 = x7
+    ror r11, r7, #24    // r11 = x12    
+    mov r7, r8          // r7 = x14
+    mov r8, r2          // r8 = x0
+    
+    
+    # Quarter round 2.3 and 2.4:
+    # use pointer to load values from memory:
+    ldr r2, [r12, #32] 	// r2 = x8
+    ldr r3, [r12, #52] 	// r3 = x13, still needs to rotate 24, done in first eor
+    ldr r5, [r12, #16] 	// r5 = x4, still needs to rotate 25
+    ldr r6, [r12, #36] 	// r6 = x9
+    
+    ror r5, r5, #25     // TODO: merge this into the calculating instructions
+
+    # two quarter rounds (more info in quarterround/quarterround.s)
+    add r0, r1  	        	// *a = *a + *b
+    add r4, r5  		        // *a = *a + *b
+    eor r3, r0, r3, ror #24   	// *d = *d ^ *a
+    eor r7, r4                  // *d = *d ^ *a
+    add r2, r2, r3, ror #16 	// *c = *c + *d
+    add r6, r6, r7, ror #16 	// *c = *c + *d
+    eor r1, r2 		        	// *b = *b ^ c
+    eor r5, r6 			        // *b = *b ^ c
+    add r0, r0, r1, ror #20  	// *a = *a + *b
+    add r4, r4, r5, ror #20  	// *a = *a + *b
+    eor r3, r0, r3, ror #16  	// *d = *d ^ a
+    eor r7, r4, r7, ror #16  	// *d = *d ^ a
+    add r2, r2, r3, ror #24	    // *c = *c + *d
+    add r6, r6, r7, ror #24	    // *c = *c + *d
+    eor r1, r2, r1, ror #20 	// *b = *b ^ c
+    eor r5, r6, r5, ror #20 	// *b = *b ^ c
+
+
+    // ==========================
+    // ==========================
+    // Store values for known continuation:
+
+    # TODO: check all rotations
+
+    # write the results back to memory:
+    str r0, [r12, #8]  	// r0 = x2
+    str r1, [r12, #28], r1, ror #25 	// r1 = x7
+    str r2, [r12, #32] 	// r2 = x8
+    str r3, [r12, #52], r3, ror #24 	// r3 = x13
+    
+    str r4, [r12, #12] 	// r4 = x3
+    str r5, [r12, #16], r5, ror #25 	// r5 = x4
+    str r6, [r12, #36] 	// r6 = x9
+    str r7, [r12, #56], r7, ror #24 	// r7 = x14
+
+    str r8, [r12, #0]   // r8 = x0
+    str r9, [r12, #20]  // r9 = x5
+    str r10, [r12, #4]  // r10 = x1
+    str r11, [r12, #48] // r11 = x12
+    
+    // ==========================
+    // ==========================
+
+
+
+
+
+    push {lr}
+
     bl doubleround
     bl doubleround
     bl doubleround
@@ -70,48 +263,42 @@ cryptocore:
     
     pop {r0}        // restore pointer to out
 
-    ldm r0, {r1-r6}	// load out[0] to out[5] into r1-r6 (loads the j's)
-    ldm r12, {r7-r12}   // load x[0] to x[5] into r7-r12 
-    add r1, r7
-    add r2, r8
-    add r3, r9
-    add r4, r10
-    add r5, r11
-    add r6, r12 
+    ldm r0, {r1-r5}	// load out[0] to out[4] into r1-r5 (loads the j's)
+    ldm r12!, {r6-r10}   // load x[0] to x[4] into r6-r10 
+    add r1, r6
+    add r2, r7
+    add r3, r8
+    add r4, r9
+    add r5, r10
  
-    stm r0!, {r1-r6}   // store in out[0] to out[5]
-
-    # r12 = *x
-    movw r12, #:lower16:xarray
-    movt r12, #:upper16:xarray
+    stm r0!, {r1-r5}   // store in out[0] to out[4]
     
-    ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
-    add r12, #24	   // offset the pointer to x by 6 words
-    ldm r12!, {r6-r10} // load x[6] to x[10] into r6-r10 
+    ldm r0, {r1-r5}    // load out[5] to out[9] into r1-r5
+    ldm r12!, {r6-r10} 	// load x[5] to x[9] into r6-r10 
+
+    add r1, r6
+    add r2, r7
+    add r3, r8
+    add r4, r9
+    add r5, r10
+    
+    stm r0!, {r1-r5}   // store in out[5] to out[9]
+
+    ldm r12!, {r1-r6}     // load x[10] to x[15] into r1-r6 
+    ldm r0, {r7-r12}    // load out[10] to out[15] into r7-r12
 
     add r1, r7
     add r2, r8
     add r3, r9
     add r4, r10
     add r5, r11
-    
-    stm r0!, {r1-r5}   // store in out[6] to out[10]
+    add r6, r12
 
-    ldm r0, {r1-r5}    // load out[6] to out[10] into r1-r5
-    ldm r12!, {r6-r10}  // load x[6] to x[10] into r6-r10 
-
-    add r1, r7
-    add r2, r8
-    add r3, r9
-    add r4, r10
-    add r5, r11
-
-    stm r0!, {r1-r5}   // store in out[10] to out[15]
+    stm r0!, {r1-r6}   // store in out[10] to out[15]
     
     # substract 64 from r0 and r12 if they are needed beyond here
-    sub r12, #64
     
-    mov r0, r12 		// return x
+    mov r0, #0	 	// return 0
     pop {r4-r11}        // Restore registers before return
     bx lr
 
