@@ -4,9 +4,9 @@
 
 #include <stdint.h>
 #include "chacha20.h"
-#include "../common/stm32wrapper.h"
+//#include "../common/stm32wrapper.h"
 
-#define ROUNDS 20
+//#define ROUNDS 20
 
 typedef uint32_t uint32;
 
