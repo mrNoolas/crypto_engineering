@@ -175,7 +175,7 @@ cryptocore:
     
     # r0 = x0; r1 = x4; r2 = x1; r3 = x5; r4 = x3; r5 = x7; r6 = x9; r7 = x13; r8 = x12; r9 = x2; r10 = x14; r11 = x8
 
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
 
     # two quarter rounds (more info in quarterround/quarterround.s)
     add r9, r5                          // *a = *a + *b
@@ -240,7 +240,7 @@ cryptocore:
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24
     
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
 
     # two quarter rounds (more info in quarterround/quarterround.s)
     add r9, r1  	        	// *a = *a + *b
@@ -350,7 +350,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -402,7 +402,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -450,7 +450,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -502,7 +502,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -550,7 +550,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -602,7 +602,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -650,7 +650,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -702,7 +702,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -750,7 +750,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -802,7 +802,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -850,7 +850,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -902,7 +902,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -950,7 +950,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -1002,7 +1002,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
@@ -1050,7 +1050,7 @@ cryptocore:
     ldr r11, [r12, #40]  // r11 = x10
     ldr r6, [r12, #44]  // r6 = x11
     ldr r7, [r12, #60]  // r7 = x15 still needs to be rotated by 24    
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r1  	        	// *a = *a + *b
     add r4, r5  		        // *a = *a + *b
     eor r10, r9, r10, ror #24  	// *d = *d ^ *a
@@ -1102,7 +1102,7 @@ cryptocore:
     ldr r7, [r12, #52] 	// r7 = x13, still needs to rotate 24, done in first eor
     ldr r1, [r12, #16] 	// r1 = x4, still needs to rotate 25
     ldr r6, [r12, #36] 	// r6 = x9
-    ror r1, r1, #25     // Doing this separetly is just as fast as or faster than a barrel rotate alternative. Dont know why...
+    ror r1, r1, #25     // These rotates are optimised by the processor itself, so are left here intentionally.
     add r9, r5  	        	// *a = *a + *b
     add r4, r1  		        // *a = *a + *b
     eor r7, r9, r7, ror #24   	// *d = *d ^ *a
