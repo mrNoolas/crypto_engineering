@@ -82,29 +82,29 @@ static void mulmod(unsigned int h[17],const unsigned int r[17])
   squeeze(h);
 }
 
-int crypto_onetimeauth_poly1305(unsigned char *out,const unsigned char *in,unsigned long long inlen,const unsigned char *k)
+int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_msg,unsigned long long inlen,const unsigned char *key)
 {
   unsigned int j;
   unsigned int r[17];
   unsigned int h[17];
   unsigned int c[17];
 
-  r[0] = k[0];
-  r[1] = k[1];
-  r[2] = k[2];
-  r[3] = k[3] & 15;
-  r[4] = k[4] & 252;
-  r[5] = k[5];
-  r[6] = k[6];
-  r[7] = k[7] & 15;
-  r[8] = k[8] & 252;
-  r[9] = k[9];
-  r[10] = k[10];
-  r[11] = k[11] & 15;
-  r[12] = k[12] & 252;
-  r[13] = k[13];
-  r[14] = k[14];
-  r[15] = k[15] & 15;
+  r[0] = key[0];
+  r[1] = key[1];
+  r[2] = key[2];
+  r[3] = key[3] & 15;
+  r[4] = key[4] & 252;
+  r[5] = key[5];
+  r[6] = key[6];
+  r[7] = key[7] & 15;
+  r[8] = key[8] & 252;
+  r[9] = key[9];
+  r[10] = key[10];
+  r[11] = key[11] & 15;
+  r[12] = key[12] & 252;
+  r[13] = key[13];
+  r[14] = key[14];
+  r[15] = key[15] & 15;
   r[16] = 0;
 
   for (j = 0;j < 17;++j) h[j] = 0;
@@ -114,10 +114,10 @@ int crypto_onetimeauth_poly1305(unsigned char *out,const unsigned char *in,unsig
       c[j] = 0;
     }
     for (j = 0;(j < 16) && (j < inlen);++j) {
-      c[j] = in[j];
+      c[j] = in_msg[j];
     }
     c[j] = 1;
-    in += j;
+    in_msg += j;
     inlen -= j;
     add(h,c);
     mulmod(h,r);
@@ -126,12 +126,12 @@ int crypto_onetimeauth_poly1305(unsigned char *out,const unsigned char *in,unsig
   freeze(h);
 
   for (j = 0;j < 16;++j) {
-    c[j] = k[j + 16];
+    c[j] = key[j + 16];
   }
   c[16] = 0;
   add(h,c);
   for (j = 0;j < 16;++j) {
-    out[j] = h[j];
+    out_mac[j] = h[j];
   }
   return 0;
 }
