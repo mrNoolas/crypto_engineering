@@ -85,10 +85,19 @@ static void mulmod(unsigned int h[17],const unsigned int r[17])
 int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_msg,unsigned long long inlen,const unsigned char *key)
 {
   unsigned int j;
-  unsigned int r[17];
-  unsigned int h[17]; 
-  unsigned int c[17]; // current operating block
-
+  unsigned int r[5];
+  unsigned int h[5]; 
+  unsigned int c[5]; // current operating block
+  
+  r[0] = key[0] | (key[1] << 8) | (key[2] << 16) | ((key[3] & 3) << 24)
+  // key[3] & 15; key[4] & 252;
+  r[1] = ((key[3] & 12) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14) | ((key[6] & 15) << 22)
+  r[2] = ((key[6] & 240) >> 4) | ((key[7] & 15) << 4) | ((key[8] & 252) << 12) | ((key[9] & 63) << 20)
+  r[3] = ((key[9] & 3) >> 6) | (key[10] << 2) | ((key[11] & 15) << 10) | ((key[12] & 252) << 18)
+  r[4] = key[13] | (key[14] << 8) | ((key[15] & 15) << 16)
+  r[5] = 0
+  
+/*
   r[0] = key[0];
   r[1] = key[1];
   r[2] = key[2];
@@ -105,20 +114,27 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
   r[13] = key[13];
   r[14] = key[14];
   r[15] = key[15] & 15;
-  r[16] = 0;
+  r[16] = 0;*/
 
-  for (j = 0;j < 17;++j) h[j] = 0;
+  for (j = 0;j < 5;++j) h[j] = 0;
 
   while (inlen > 0) {
     // reset c
-    for (j = 0;j < 17;++j) {
+    for (j = 0;j < 5;++j) {
       c[j] = 0;
     }
     
     // copy input block
+    c[0] = key[0] | (key[1] << 8) | (key[2] << 16) | ((key[3] & 3) << 24)
+    c[1] = ((key[3] & 252) >> 2) | (key[4] << 6) | (key[5] << 14) | ((key[6] & 15) << 22)
+    c[2] = ((key[6] & 240) >> 4) | (key[7] << 4) | (key[8] << 12) | ((key[9] & 63) << 20)
+    c[3] = ((key[9] & 3) >> 6) | (key[10] << 2) | (key[11] << 10) | (key[12] << 18)
+    c[4] = key[13] | (key[14] << 8) | (key[15] << 16)
+    /*
     for (j = 0;(j < 16) && (j < inlen);++j) {
       c[j] = in_msg[j];
-    }
+    }*/
+    
     c[j] = 1;
     in_msg += j;
     inlen -= j;
