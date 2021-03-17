@@ -13,8 +13,8 @@ static void add(unsigned int h[17],const unsigned int c[17])
   u = 0;
   for (j = 0;j < 17;++j) {
     u += h[j] + c[j];
-    h[j] = u & 255;
-    u >>= 8;
+    h[j] = u & 67108863;
+    u >>= 26;
   }
 }
 
@@ -86,8 +86,8 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
 {
   unsigned int j;
   unsigned int r[17];
-  unsigned int h[17];
-  unsigned int c[17];
+  unsigned int h[17]; 
+  unsigned int c[17]; // current operating block
 
   r[0] = key[0];
   r[1] = key[1];
@@ -110,15 +110,20 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
   for (j = 0;j < 17;++j) h[j] = 0;
 
   while (inlen > 0) {
+    // reset c
     for (j = 0;j < 17;++j) {
       c[j] = 0;
     }
+    
+    // copy input block
     for (j = 0;(j < 16) && (j < inlen);++j) {
       c[j] = in_msg[j];
     }
     c[j] = 1;
     in_msg += j;
     inlen -= j;
+    
+    // Calculate next round
     add(h,c);
     mulmod(h,r);
   }
