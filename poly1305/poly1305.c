@@ -6,7 +6,7 @@ Public domain.
 
 #include "poly1305.h"
 
-void translate16_6(unsigned int in[17], unsigned int out[6])
+void translate17_6(unsigned int in[17], unsigned int out[6])
 {
   squeeze(in);
   // TODO: look at shifts
@@ -18,7 +18,7 @@ void translate16_6(unsigned int in[17], unsigned int out[6])
   out[5] = (in[16] >> 2) & 252;
 }
 
-void translate6_16(unsigned int out[17], unsigned int in[6]) 
+void translate6_17(unsigned int out[17], unsigned int in[6]) 
 { 
   // squeeze 6
     unsigned int j;
@@ -58,7 +58,7 @@ void translate6_16(unsigned int out[17], unsigned int in[6])
   out[15] = (in[4] >> 16) & 255;
   out[16] = (in[4] >> 24) & 3;
   
-  // squeeze again :)
+  // squeeze again :), now 17
   unsigned int j;
   unsigned int u;
   u = 5 * in[5];
@@ -176,8 +176,8 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
   r[15] = key[15] & 15;
   r[16] = 0;
   
-  translate16_6(r, temp);
-  translate6_16(temp, r);
+  translate17_6(r, temp);
+  translate6_17(temp, r);
 
   for (j = 0;j < 17;++j) h[j] = 0;
 
