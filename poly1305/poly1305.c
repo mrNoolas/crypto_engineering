@@ -6,7 +6,7 @@ Public domain.
 
 #include "poly1305.h"
 
-void translate16_6(unsigned int *in[16] unsigned int *out[6])
+void translate16_6(unsigned int in[16], unsigned int out[6])
 {
   out[0] = in[0] | (in[1] << 8) | (in[2] << 16) | ((in[3] & 3) << 24);
   out[1] = ((in[3] & 63) >> 2) | (in[4] << 6) | (in[5] << 14) | ((in[6] & 15) << 22);
@@ -16,11 +16,11 @@ void translate16_6(unsigned int *in[16] unsigned int *out[6])
   out[5] = 0;
 }
 
-void translate6_16(unsigned int *in[17] unsigned int *out[6])
+void translate6_16(unsigned int in[17], unsigned int out[6])
 {
   out[0]  = ((in[0] >> 18) & 255);
   out[1]  = ((in[0] >> 18) & 255);
-  out[2]  = ()(in[0] >> 2) & 255);
+  out[2]  = ((in[0] >> 2) & 255);
   out[3]  = (in[0] & 3) | ((in[1] >> 20) & 252);
   out[4]  = ((in[1] >> 12) & 255);
   out[5]  = ((in[1] >> 4) & 255);
@@ -33,7 +33,7 @@ void translate6_16(unsigned int *in[17] unsigned int *out[6])
   out[12] = (in[2] & 255);
   out[13] = ((in[3] >> 18) & 255);
   out[14] = ((in[3] >> 18) & 255);
-  out[15] = (in[3] >> 2) & 255);
+  out[15] = ((in[3] >> 2) & 255);
   out[16] = (in[3] & 3) | ((in[4] >> 20) & 252);
 }
 
@@ -122,8 +122,6 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
   unsigned int c[17];
 
   unsigned int temp[6];
-  translate16_6(key, temp);
-  translate6_16(temp, key);
 
   r[0] = key[0];
   r[1] = key[1];
@@ -142,6 +140,9 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
   r[14] = key[14];
   r[15] = key[15] & 15;
   r[16] = 0;
+  
+  translate16_6(r, temp);
+  translate6_16(temp, r);
 
   for (j = 0;j < 17;++j) h[j] = 0;
 
