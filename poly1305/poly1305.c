@@ -6,35 +6,69 @@ Public domain.
 
 #include "poly1305.h"
 
-void translate16_6(unsigned int in[16], unsigned int out[6])
+void translate16_6(unsigned int in[17], unsigned int out[6])
 {
-  out[0] = in[0] | (in[1] << 8) | (in[2] << 16) | ((in[3] & 3) << 24);
-  out[1] = ((in[3] & 63) >> 2) | (in[4] << 6) | (in[5] << 14) | ((in[6] & 15) << 22);
-  out[2] = ((in[6] & 240) >> 4) | (in[7] << 4) | (in[8] << 12) | ((in[9] & 63) << 20);
+  squeeze(in);
+  // TODO: look at shifts
+  out[0] = in[0] | (in[1] << 8) | (in[2] << 16) | ((in[3] << 24) & 3);
+  out[1] = ((in[3] & 63) >> 2) | (in[4] << 6) | (in[5] << 14) | ((in[6] << 22) & 15);
+  out[2] = ((in[6] & 240) >> 4) | (in[7] << 4) | (in[8] << 12) | ((in[9] << 20) & 63);
   out[3] = ((in[9] & 3) >> 6) | (in[10] << 2) | (in[11] << 10) | (in[12] << 18);
-  out[4] = in[13] | (in[14] << 8) | ((in[15] & 15) << 16);
-  out[5] = 0;
+  out[4] = in[13] | (in[14] << 8) | ((in[15] & 15) << 16) | ((in[16] << 24) & 3);
+  out[5] = (in[16] >> 2) & 252;
 }
 
-void translate6_16(unsigned int in[17], unsigned int out[6])
-{
-  out[0]  = ((in[0] >> 18) & 255);
-  out[1]  = ((in[0] >> 18) & 255);
-  out[2]  = ((in[0] >> 2) & 255);
-  out[3]  = (in[0] & 3) | ((in[1] >> 20) & 252);
-  out[4]  = ((in[1] >> 12) & 255);
-  out[5]  = ((in[1] >> 4) & 255);
-  out[6]  = (in[1] & 15) | ((in[2] >> 22) & 240);
-  out[7]  = ((in[2] >> 14) & 255);
-  out[8]  = ((in[2] >> 6) & 255);
-  out[9]  = (in[2] & 63) | ((in[2] >> 24) & 192);
-  out[10] = ((in[2] >> 16) & 255);
-  out[11] = ((in[2] >> 8) & 255);
-  out[12] = (in[2] & 255);
-  out[13] = ((in[3] >> 18) & 255);
-  out[14] = ((in[3] >> 18) & 255);
-  out[15] = ((in[3] >> 2) & 255);
-  out[16] = (in[3] & 3) | ((in[4] >> 20) & 252);
+void translate6_16(unsigned int out[17], unsigned int in[6]) 
+{ 
+  // squeeze 6
+    unsigned int j;
+  unsigned int u;
+  u = 0;
+  for (j = 0; j < 5; ++j) {
+    u += h[j];
+    h[j] = u & 67108863;
+    u >>= 26;
+  }
+  u += h[5];
+  h[5] = 0;
+  u *= 5;
+  for (j = 0;j < 5;++j) {
+    u += h[j];
+    h[j] = u & 67108863;
+    u >>= 26;
+  }
+  u += h[5];
+  h[5] = u;
+  
+  out[0]  = in[0] & 255;
+  out[1]  = (in[0] >> 8) & 255;
+  out[2]  = (in[0] >> 16) & 255;
+  out[3]  = ((in[0] >> 24) & 3) | ((in[1] << 2) & 0b11111100);
+  out[4]  = (in[1] >> 6) & 255;
+  out[5]  = (in[1] >> 14) & 255;
+  out[6]  = ((in[1] >> 22) & 15) | ((in[2] << 4) & 0b11110000);
+  out[7]  = (in[2] >> 4) & 255;
+  out[8]  = (in[2] >> 12) & 255;
+  out[9]  = ((in[2] >> 20) & 15) | ((in[3] << 6) & 0b11000000);
+  out[10] = (in[3] >> 2) & 255;
+  out[11] = (in[3] >> 10) & 255;
+  out[12] = (in[3] >> 18) & 255;
+  out[13] = in[4] & 255;
+  out[14] = (in[4] >> 8) & 255;
+  out[15] = (in[4] >> 16) & 255;
+  out[16] = (in[4] >> 24) & 3;
+  
+  // squeeze again :)
+  unsigned int j;
+  unsigned int u;
+  u = 5 * in[5];
+  for (j = 0;j < 16;++j) {
+    u += h[j];
+    h[j] = u & 255;
+    u >>= 8;
+  }
+  u += h[16];
+  h[16] = u;
 }
 
 
@@ -98,6 +132,7 @@ static void mulmod(unsigned int h[17],const unsigned int r[17])
   unsigned int j;
   unsigned int u;
 
+  // https://crypto.stackexchange.com/questions/68222/how-does-the-squeeze-function-in-the-nacl-poly1305-implementation-work
   for (i = 0;i < 17;++i) {
     u = 0;
     for (j = 0;j <= i;++j) {
