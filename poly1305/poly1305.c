@@ -8,19 +8,7 @@ Public domain.
 #include "../common/stm32wrapper.h"
 #include <stdio.h>
 
-static void add(unsigned int h[17],const unsigned int c[17])
-{
-  unsigned int j;
-  unsigned int u;
-  u = 0;
-  for (j = 0;j < 17;++j) {
-    u += h[j] + c[j];
-    h[j] = u & 255;
-    u >>= 8;
-  }
-}
-
-static void add_6(unsigned int h[6], const unsigned int c[6]) {
+static void add(unsigned int h[6], const unsigned int c[6]) {
   unsigned int u;
   u = 0;
   for (unsigned int j = 0; j < 6; j++) { // TODO: is ++j faster?
@@ -73,22 +61,21 @@ static void squeeze_6(unsigned int h[6]) {
   h[5] = u;
 }
 
-
-static const unsigned int minusp[17] = {
-  5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 252
+static const unsigned int minusp[6] = {
+  5, 0, 0, 0, 0, 0b11111111111111111111111111
 } ;
 
-static void freeze(unsigned int h[17])
+static void freeze(unsigned int h[6])
 {
-  unsigned int horig[17];
+  unsigned int horig[6];
   unsigned int j;
   unsigned int negative;
-  for (j = 0;j < 17;++j) {
+  for (j = 0;j < 6;++j) {
     horig[j] = h[j];
   }
   add(h,minusp);
-  negative = -(h[16] >> 7);
-  for (j = 0;j < 17;++j) {
+  negative = -(h[6] >> 25);
+  for (j = 0;j < 6;++j) {
     h[j] ^= negative & (horig[j] ^ h[j]);
   }
 }
@@ -138,30 +125,6 @@ void translate6_17(unsigned int in[6], unsigned int out[17])
   u += out[16];
   out[16] = u;
   //*/
-}
-
-static void mulmod(unsigned int h[17],const unsigned int r[17])
-{
-  unsigned int hr[17];
-  unsigned int i;
-  unsigned int j;
-  unsigned int u;
-
-  // https://crypto.stackexchange.com/questions/68222/how-does-the-squeeze-function-in-the-nacl-poly1305-implementation-work
-  for (i = 0;i < 17;++i) {
-    u = 0;
-    for (j = 0;j <= i;++j) {
-      u += h[j] * r[i - j];
-    }
-    for (j = i + 1;j < 17;++j) {
-      u += 320 * h[j] * r[i + 17 - j];
-    }
-    hr[i] = u;
-  }
-  for (i = 0;i < 17;++i) {
-    h[i] = hr[i];
-  }
-  squeeze(h);
 }
 
 static void mulmod_6(unsigned int h[6],const unsigned int r[6])
@@ -246,39 +209,54 @@ static void load_input_block(unsigned int c_6[6], unsigned long long inlen, cons
 int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_msg,unsigned long long inlen,const unsigned char *key)
 {
   unsigned int j;
-  unsigned int r[17], h[17], c[17];
-  unsigned int c_6[6], h_6[6], r_6[6];
+  unsigned int c[6], h[6], r[6];
   
-  r_6[0] = ((key[0]  & 0b11111111) >> 0) | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
-  r_6[1] = ((key[3]  & 0b00001100) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14)         | ((key[6]  & 0b00001111) << 22);
-  r_6[2] = ((key[6]  & 0b11110000) >> 4) | ((key[7] &  15) << 4) | ((key[8] & 252) << 12) | ((key[9]  & 0b00111111) << 20);
-  r_6[3] = ((key[9]  & 0b11000000) >> 6) | (key[10] << 2)        | ((key[11] & 15) << 10) | ((key[12] & 252) << 18);
-  r_6[4] = ((key[13] & 0b11111111) >> 0) | (key[14] << 8)        | ((key[15] & 15) << 16);
-  r_6[5] = 0;
-  translate6_17(r_6, r);
+  r[0] = ((key[0]  & 0b11111111) >> 0) | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
+  r[1] = ((key[3]  & 0b00001100) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14)         | ((key[6]  & 0b00001111) << 22);
+  r[2] = ((key[6]  & 0b11110000) >> 4) | ((key[7] &  15) << 4) | ((key[8] & 252) << 12) | ((key[9]  & 0b00111111) << 20);
+  r[3] = ((key[9]  & 0b11000000) >> 6) | (key[10] << 2)        | ((key[11] & 15) << 10) | ((key[12] & 252) << 18);
+  r[4] = ((key[13] & 0b11111111) >> 0) | (key[14] << 8)        | ((key[15] & 15) << 16);
+  r[5] = 0;
 
-  for (j = 0;j < 6;++j) h_6[j] = 0;
+  for (j = 0;j < 6;++j) h[j] = 0;
 
   while (inlen > 0) {
-    load_input_block(c_6, inlen, in_msg); 
+    load_input_block(c, inlen, in_msg); 
     j = 16; if (inlen < j) j = inlen;
     in_msg += j;
     inlen -= j;
 
-    add_6(h_6, c_6);
-    mulmod_6(h_6,r_6);
+    add(h, c);
+    mulmod_6(h,r);
   }
 
-  translate6_17(h_6, h);
+  
   freeze(h);
-
-  for (j = 0;j < 16;++j) {
-    c[j] = key[j + 16];
-  }
-  c[16] = 0;
+  
+  c[0] = ((key[16] & 0b11111111) >> 0) | (key[17] << 8) | (key[18] << 16) | ((key[19]  & 0b00000011) << 24);
+  c[1] = ((key[19] & 0b11111100) >> 2) | (key[20] << 6) | (key[21] << 14) | ((key[22]  & 0b00001111) << 22);
+  c[2] = ((key[22] & 0b11110000) >> 4) | (key[23] << 4) | (key[24] << 12) | ((key[25]  & 0b00111111) << 20);
+  c[3] = ((key[25] & 0b11000000) >> 6) | (key[26] << 2) | (key[27] << 10) | (key[28] << 18);
+  c[4] = ((key[29] & 0b11111111) >> 0) | (key[30] << 8) | (key[31] << 16);
+  c[5] = 0;
+  
   add(h,c);
-  for (j = 0;j < 16;++j) {
-    out_mac[j] = h[j];
-  }
+  
+  out_mac[0]  = h[0] & 0xff;                                           // 0b00000000000000000011111111
+  out_mac[1]  = (h[0]  >> 8)   & 0xff;                                 // 0b00000000001111111100000000
+  out_mac[2]  = (h[0]  >> 16)  & 0xff;                                 // 0b00111111110000000000000000
+  out_mac[3]  = ((h[0] >> 24)  & 0x03) | ((h[1] << 2) & 0b11111100);  // 0b11000000000000000000000000 and 0b00000000000000000000111111 
+  out_mac[4]  = (h[1]  >> 6)   & 0xff;                                 // 0b00000000000011111111000000
+  out_mac[5]  = (h[1]  >> 14)  & 0xff;                                 // 0b00001111111100000000000000
+  out_mac[6]  = ((h[1] >> 22)  & 0x0f) | ((h[2] << 4) & 0b11110000);  // 0b11110000000000000000000000 and 0b00000000000000000000001111 
+  out_mac[7]  = (h[2]  >> 4)   & 0xff;
+  out_mac[8]  = (h[2]  >> 12)  & 0xff;
+  out_mac[9]  = ((h[2] >> 20)  & 0x3f) | ((h[3] << 6) & 0b11000000);  // 0b11111100000000000000000000 and 0b00000000000000000000000011
+  out_mac[10] = (h[3]  >> 2)   & 0xff;
+  out_mac[11] = (h[3]  >> 10)  & 0xff;
+  out_mac[12] = (h[3]  >> 18)  & 0xff;
+  out_mac[13] = h[4] & 0xff;                                           // 0b00000000000000000011111111
+  out_mac[14] = (h[4]  >> 8)   & 0xff;                                 // 0b00000000001111111100000000
+  out_mac[15] = (h[4]  >> 16)  & 0xff;                                 // 0b00111111110000000000000000
   return 0;
 }

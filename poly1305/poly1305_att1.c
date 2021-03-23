@@ -128,47 +128,37 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
     }
     
     // copy input block
-    switch(inlen){
-        case 16:
-            c[4] =(in_msg[15] << 16);
-        case 15:
-            c[4] |= in_msg[13];
-        case 14:
-            c[4] |= (in_msg[14] << 8) ;
-        case 13:
-            c[3] |= (in_msg[12] << 18);
-        case 12:
-            c[3] |= (in_msg[11] << 10);
-        case 11:
-            c[3] |= (in_msg[10] << 2);
-        case 10:
-            c[3] |= ((in_msg[9] & 3) >> 6);
-            c[2] |= ((in_msg[9] & 63) << 20);
-        case 9:
-            c[2] |= (in_msg[8] << 12);
-        case 8:
-            c[2] |= (in_msg[7] << 4);
-        case 7:
-            c[2] |= ((in_msg[6] & 240) >> 4);
-            c[1] |= ((in_msg[6] & 15) << 22);
-        case 6:
-            c[1] |= (in_msg[5] << 14);
-        case 5:
-            c[1] |= (in_msg[4] << 6);
-        case 4:
-            c[1] |= ((in_msg[3] & 252) >> 2);
-            c[0] |= ((in_msg[3] & 3) << 24);
-        case 3:
-            c[0] |= (in_msg[2] << 16);
-        case 2:
-            c[0] |= (in_msg[1] << 8);
-        case 1:
-            c[0] |= in_msg[0];        
+    if (inlen == 15) c_6[4] = 1 << 16; else if (inlen > 15) c_6[4] =  in_msg[15] << 16;
+    if (inlen == 14) c_6[4] |= 1 << 8;  else if (inlen > 14) c_6[4] |= in_msg[14] << 8;
+    if (inlen == 13) c_6[4] |= 1;       else if (inlen > 13) c_6[4] |= in_msg[13];
+    if (inlen == 12) c_6[3] |= 1 << 18; else if (inlen > 12) c_6[3] |= in_msg[12] << 18;
+    if (inlen == 11) c_6[3] |= 1 << 10; else if (inlen > 11) c_6[3] |= in_msg[11] << 10;
+    if (inlen == 10) c_6[3] |= 1 << 2;  else if (inlen > 10) c_6[3] |= in_msg[10] << 2;
+    if (inlen == 9) {
+        c_6[2] |= 1 << 20;
+    } else if (inlen > 9) {
+        c_6[3] |= (in_msg[9] & 0b11000000) >> 6;
+        c_6[2] |= (in_msg[9] & 0b00111111) << 20;
     }
-    /*
-    for (j = 0;(j < 16) && (j < inlen);++j) {
-      c[j] = in_msg[j];
-    }*/
+    if (inlen == 8) c_6[2] |= 1 << 12; else if (inlen > 8) c_6[2] |= in_msg[8] << 12;
+    if (inlen == 7) c_6[2] |= 1 << 4;  else if (inlen > 7) c_6[2] |= in_msg[7] << 4;
+    if (inlen == 6) {
+        c_6[1] |= 1 << 22;
+    } else if (inlen > 6) {
+        c_6[2] |= (in_msg[6] & 0b11110000) >> 4;
+        c_6[1] |= (in_msg[6] & 0b00001111) << 22;
+    }
+    if (inlen == 5) c_6[1] |= 1 << 14; else if (inlen > 5) c_6[1] |= in_msg[5] << 14;
+    if (inlen == 4) c_6[1] |= 1 << 6;  else if (inlen > 4) c_6[1] |= in_msg[4] << 6;
+    if (inlen == 3) {
+        c_6[0] |= 1 << 24;
+    } else if (inlen > 3) {
+        c_6[1] |= (in_msg[3] & 0b11111100) >> 2;
+        c_6[0] |= (in_msg[3] & 0b00000011) << 24;
+    }
+    if (inlen == 2) c_6[0] |= 1 << 16; else if (inlen > 2) c_6[0] |= in_msg[2] << 16;
+    if (inlen == 1) c_6[0] |= 1 << 8; else if (inlen > 1) c_6[0] |= in_msg[1] << 8;
+    if (inlen == 0) c_6[0] |= 1; else c_6[0] |= in_msg[0];
     
     c[j] = 1;
     in_msg += j;
@@ -179,7 +169,7 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
     mulmod(h,r);
   }
 
-  freeze(h);
+  freeze(h)
 
   // add last part of key
   c[0] = key[16] | (key[17] << 8) | (key[18] << 16) | ((key[19] & 3) << 24);
