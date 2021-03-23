@@ -5,6 +5,8 @@ Public domain.
 */
 
 #include "poly1305.h"
+#include "../common/stm32wrapper.h"
+#include <stdio.h>
 
 static void add(unsigned int h[17],const unsigned int c[17])
 {
@@ -91,30 +93,6 @@ static void freeze(unsigned int h[17])
   }
 }
 
-static void mulmod(unsigned int h[17],const unsigned int r[17])
-{
-  unsigned int hr[17];
-  unsigned int i;
-  unsigned int j;
-  unsigned int u;
-
-  // https://crypto.stackexchange.com/questions/68222/how-does-the-squeeze-function-in-the-nacl-poly1305-implementation-work
-  for (i = 0;i < 17;++i) {
-    u = 0;
-    for (j = 0;j <= i;++j) {
-      u += h[j] * r[i - j];
-    }
-    for (j = i + 1;j < 17;++j) {
-      u += 320 * h[j] * r[i + 17 - j];
-    }
-    hr[i] = u;
-  }
-  for (i = 0;i < 17;++i) {
-    h[i] = hr[i];
-  }
-  squeeze(h);
-}
-
 void translate17_6(unsigned int in[17], unsigned int out[6])
 {
   squeeze(in);
@@ -162,54 +140,136 @@ void translate6_17(unsigned int in[6], unsigned int out[17])
   //*/
 }
 
+static void mulmod(unsigned int h[17],const unsigned int r[17])
+{
+  unsigned int hr[17];
+  unsigned int i;
+  unsigned int j;
+  unsigned int u;
+
+  // https://crypto.stackexchange.com/questions/68222/how-does-the-squeeze-function-in-the-nacl-poly1305-implementation-work
+  for (i = 0;i < 17;++i) {
+    u = 0;
+    for (j = 0;j <= i;++j) {
+      u += h[j] * r[i - j];
+    }
+    for (j = i + 1;j < 17;++j) {
+      u += 320 * h[j] * r[i + 17 - j];
+    }
+    hr[i] = u;
+  }
+  for (i = 0;i < 17;++i) {
+    h[i] = hr[i];
+  }
+  squeeze(h);
+}
+
+static void mulmod_6(unsigned int h[6],const unsigned int r[6])
+{
+  unsigned int h_17[17], r_17[17], hr_17[17];
+  
+  unsigned int hr[6];
+  unsigned int i;
+  unsigned int j;
+  unsigned int u;
+  
+  translate6_17(h, h_17);
+  translate6_17(r, r_17);
+  for (i = 0;i < 17;++i) {
+    u = 0;
+    for (j = 0;j <= i;++j) {
+      u += h_17[j] * r_17[i - j];
+    }
+    for (j = i + 1;j < 17;++j) {
+      u += 320 * h_17[j] * r_17[i + 17 - j];
+    }
+    hr_17[i] = u;
+  } 
+  translate17_6(hr_17, hr);
+  translate17_6(r_17, r);/*
+  for (i = 0;i < 6;++i) {
+    u = 0;
+    for (j = 0;j <= i;++j) {
+      u += h[j] * r[i - j];
+    }
+    for (j = i + 1;j < 6;++j) {
+      u += 5 * h[j] * r[i + 6 - j];
+    }
+    hr[i] = u;
+  }*/  
+  
+  for (i = 0;i < 6;++i) {
+    h[i] = hr[i];
+  }
+  squeeze_6(h);
+}
+
+static void load_input_block(unsigned int c_6[6], unsigned long long inlen, const unsigned char *in_msg) {
+    unsigned int j;
+    for (j = 0;j < 6;++j) c_6[j] = 0;
+
+    // copy input block
+    if (inlen >= 16) c_6[4] |= (1 << 24);
+    if (inlen == 15) c_6[4] |= 1 << 16; else if (inlen > 15) c_6[4] |= in_msg[15] << 16;
+    if (inlen == 14) c_6[4] |= 1 << 8;  else if (inlen > 14) c_6[4] |= in_msg[14] << 8;
+    if (inlen == 13) c_6[4] |= 1;       else if (inlen > 13) c_6[4] |= in_msg[13];
+    if (inlen == 12) c_6[3] |= 1 << 18; else if (inlen > 12) c_6[3] |= in_msg[12] << 18;
+    if (inlen == 11) c_6[3] |= 1 << 10; else if (inlen > 11) c_6[3] |= in_msg[11] << 10;
+    if (inlen == 10) c_6[3] |= 1 << 2;  else if (inlen > 10) c_6[3] |= in_msg[10] << 2;
+    if (inlen == 9) {
+        c_6[2] |= 1 << 20;
+    } else if (inlen > 9) {
+        c_6[3] |= (in_msg[9] & 0b11000000) >> 6;
+        c_6[2] |= (in_msg[9] & 0b00111111) << 20;
+    }
+    if (inlen == 8) c_6[2] |= 1 << 12; else if (inlen > 8) c_6[2] |= in_msg[8] << 12;
+    if (inlen == 7) c_6[2] |= 1 << 4;  else if (inlen > 7) c_6[2] |= in_msg[7] << 4;
+    if (inlen == 6) {
+        c_6[1] |= 1 << 22;
+    } else if (inlen > 6) {
+        c_6[2] |= (in_msg[6] & 0b11110000) >> 4;
+        c_6[1] |= (in_msg[6] & 0b00001111) << 22;
+    }
+    if (inlen == 5) c_6[1] |= 1 << 14; else if (inlen > 5) c_6[1] |= in_msg[5] << 14;
+    if (inlen == 4) c_6[1] |= 1 << 6;  else if (inlen > 4) c_6[1] |= in_msg[4] << 6;
+    if (inlen == 3) {
+        c_6[0] |= 1 << 24;
+    } else if (inlen > 3) {
+        c_6[1] |= (in_msg[3] & 0b11111100) >> 2;
+        c_6[0] |= (in_msg[3] & 0b00000011) << 24;
+    }
+    if (inlen == 2) c_6[0] |= 1 << 16; else if (inlen > 2) c_6[0] |= in_msg[2] << 16;
+    if (inlen == 1) c_6[0] |= 1 << 8; else if (inlen > 1) c_6[0] |= in_msg[1] << 8;
+    c_6[0] |= in_msg[0]; 
+}
+
 int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_msg,unsigned long long inlen,const unsigned char *key)
 {
   unsigned int j;
-  unsigned int r[17];
-  unsigned int h[17];
-  unsigned int c[17];
+  unsigned int r[17], h[17], c[17];
+  unsigned int c_6[6], h_6[6], r_6[6];
+  
+  r_6[0] = ((key[0]  & 0b11111111) >> 0) | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
+  r_6[1] = ((key[3]  & 0b00001100) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14)         | ((key[6]  & 0b00001111) << 22);
+  r_6[2] = ((key[6]  & 0b11110000) >> 4) | ((key[7] &  15) << 4) | ((key[8] & 252) << 12) | ((key[9]  & 0b00111111) << 20);
+  r_6[3] = ((key[9]  & 0b11000000) >> 6) | (key[10] << 2)        | ((key[11] & 15) << 10) | ((key[12] & 252) << 18);
+  r_6[4] = ((key[13] & 0b11111111) >> 0) | (key[14] << 8)        | ((key[15] & 15) << 16);
+  r_6[5] = 0;
+  translate6_17(r_6, r);
 
-  r[0] = key[0];
-  r[1] = key[1];
-  r[2] = key[2];
-  r[3] = key[3] & 15;
-  r[4] = key[4] & 252;
-  r[5] = key[5];
-  r[6] = key[6];
-  r[7] = key[7] & 15;
-  r[8] = key[8] & 252;
-  r[9] = key[9];
-  r[10] = key[10];
-  r[11] = key[11] & 15;
-  r[12] = key[12] & 252;
-  r[13] = key[13];
-  r[14] = key[14];
-  r[15] = key[15] & 15;
-  r[16] = 0;
-
-  for (j = 0;j < 17;++j) h[j] = 0;
+  for (j = 0;j < 6;++j) h_6[j] = 0;
 
   while (inlen > 0) {
-    for (j = 0;j < 17;++j) {
-      c[j] = 0;
-    }
-    for (j = 0;(j < 16) && (j < inlen);++j) {
-      c[j] = in_msg[j];
-    }
-    c[j] = 1;
+    load_input_block(c_6, inlen, in_msg); 
+    j = 16; if (inlen < j) j = inlen;
     in_msg += j;
     inlen -= j;
 
-    //add(h,c);
-    unsigned int c_6[6], h_6[6];
-    translate17_6(h, c_6);
-    translate17_6(c, h_6);
     add_6(h_6, c_6);
-    translate6_17(h_6, h);
-
-    mulmod(h,r);
+    mulmod_6(h_6,r_6);
   }
 
+  translate6_17(h_6, h);
   freeze(h);
 
   for (j = 0;j < 16;++j) {
