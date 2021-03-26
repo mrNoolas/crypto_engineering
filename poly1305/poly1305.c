@@ -40,6 +40,7 @@ static void squeeze(unsigned int h[17])
   h[16] = u;
 }
 
+// TODO: do inline
 static void squeeze_6(unsigned int h[6]) {
   unsigned int j;
   unsigned int u;
@@ -65,6 +66,7 @@ static const unsigned int minusp[6] = {
   5, 0, 0, 0, 0, 0b11111111111111111111111111
 } ;
 
+// TODO: do inline
 static void freeze(unsigned int h[6])
 {
   unsigned int horig[6];
@@ -127,6 +129,7 @@ void translate6_17(unsigned int in[6], unsigned int out[17])
   //*/
 }
 
+// TODO: do inline
 static void mulmod_6(unsigned int h[6],const unsigned int r[6])
 {
   unsigned int h_17[17], r_17[17], hr_17[17];
@@ -135,28 +138,24 @@ static void mulmod_6(unsigned int h[6],const unsigned int r[6])
   unsigned int i;
   unsigned int j;
   unsigned int u;
-  
+  //*
   translate6_17(h, h_17);
   translate6_17(r, r_17);
-  for (i = 0;i < 17;++i) {
+  for (i = 0; i < 17; ++i) {
     u = 0;
-    for (j = 0;j <= i;++j) {
-      u += h_17[j] * r_17[i - j];
-    }
-    for (j = i + 1;j < 17;++j) {
-      u += 320 * h_17[j] * r_17[i + 17 - j];
+    for (j = 0; j < 17; ++j) {
+        if (j <= i) u += h_17[j] * r_17[i - j];
+        else u += 320 * h_17[j] * r_17[i + 17 - j];
     }
     hr_17[i] = u;
   } 
   translate17_6(hr_17, hr);
-  translate17_6(r_17, r);/*
+  translate17_6(r_17, r);/*/
   for (i = 0;i < 6;++i) {
     u = 0;
-    for (j = 0;j <= i;++j) {
-      u += h[j] * r[i - j];
-    }
-    for (j = i + 1;j < 6;++j) {
-      u += 5 * h[j] * r[i + 6 - j];
+    for (j = 0; j < 6; ++j) {
+        if (j <= i) u += h[j] * r[i - j];
+        else u += 5 * h[j] * r[i + 6 - j];  
     }
     hr[i] = u;
   }*/  
