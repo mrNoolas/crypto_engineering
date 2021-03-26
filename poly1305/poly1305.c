@@ -11,37 +11,14 @@ Public domain.
 static void add(unsigned int h[6], const unsigned int c[6]) {
   unsigned int u;
   u = 0;
-  for (unsigned int j = 0; j < 6; j++) { // TODO: is ++j faster?
+  for (unsigned int j = 0; j < 6; j++) {
     u += h[j] + c[j];
     h[j] = u & 67108863;
     u >>= 26;
   }
 }
 
-static void squeeze(unsigned int h[17])
-{
-  unsigned int j;
-  unsigned int u;
-  u = 0;
-  for (j = 0;j < 16;++j) {
-    u += h[j];
-    h[j] = u & 255;
-    u >>= 8;
-  }
-  u += h[16];
-  h[16] = u & 3;
-  u = 5 * (u >> 2);
-  for (j = 0;j < 16;++j) {
-    u += h[j];
-    h[j] = u & 255;
-    u >>= 8;
-  }
-  u += h[16];
-  h[16] = u;
-}
-
-// TODO: do inline
-static void squeeze_6(unsigned int h[6]) {
+static void squeeze(unsigned int h[6]) {
   unsigned int j;
   unsigned int u;
   u = 0;
@@ -83,26 +60,7 @@ static void squeeze_64(unsigned long long h[6]) {
   h[5] = u;
 }
 
-static const unsigned int minusp[6] = {
-  5, 0, 0, 0, 0, 0xffffffff
-} ;
-
-// TODO: do inline
-static void freeze(unsigned int h[6])
-{
-  unsigned int horig[6];
-  unsigned int j;
-  unsigned int negative;
-  for (j = 0;j < 6;++j) {
-    horig[j] = h[j];
-  }
-  add(h,minusp);
-  negative = -(h[5] >> 25);
-  for (j = 0;j < 6;++j) {
-    h[j] ^= negative & (horig[j] ^ h[j]);
-  }
-}
-
+/*
 void translate17_6(unsigned int in[17], unsigned int out[6])
 {
   squeeze(in);
@@ -116,7 +74,7 @@ void translate17_6(unsigned int in[17], unsigned int out[6])
 
 void translate6_17(unsigned int in[6], unsigned int out[17]) 
 { 
-  squeeze_6(in);
+  squeeze(in);
   // 0b11 1111 1111  1111 1111  1111 1111
   out[0]  = in[0] & 0xff;           // 0b00000000000000000011111111
   out[1]  = (in[0]  >> 8)   & 0xff; // 0b00000000001111111100000000
@@ -135,16 +93,13 @@ void translate6_17(unsigned int in[6], unsigned int out[17])
   out[14] = (in[4]  >> 8)   & 0xff; // 0b00000000001111111100000000
   out[15] = (in[4]  >> 16)  & 0xff; // 0b00111111110000000000000000
   out[16] = (in[4]  >> 24)  & 0x03; 
-}
+}*/
 
-// TODO: do inline
-static void mulmod_6(unsigned int h[6],const unsigned int r[6]) {
+static void mulmod(unsigned int h[6],const unsigned int r[6]) {
     unsigned long long hr[6];
     unsigned int i;
-    unsigned int j;
-    unsigned long long u;
     
-    squeeze_6(h);
+    squeeze(h);
     unsigned long long b0 = r[0];
     unsigned long long b1 = r[1];
     unsigned long long b2 = r[2];
@@ -163,8 +118,23 @@ static void mulmod_6(unsigned int h[6],const unsigned int r[6]) {
     }
 }
 
-static void load_input_block(unsigned int c[6], unsigned long long inlen, const unsigned char *in_msg) {
-    unsigned int j;
+static const unsigned int minusp[6] = {5, 0, 0, 0, 0, 0xffffffff} ;
+
+int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_msg,unsigned long long inlen,const unsigned char *key)
+{
+  unsigned int j;
+  unsigned int c[6], h[6], r[6];
+  
+  r[0] = ((key[0]  & 0b11111111) >> 0) | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
+  r[1] = ((key[3]  & 0b00001100) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14)         | ((key[6]  & 0b00001111) << 22);
+  r[2] = ((key[6]  & 0b11110000) >> 4) | ((key[7] &  15) << 4) | ((key[8] & 252) << 12) | ((key[9]  & 0b00111111) << 20);
+  r[3] = ((key[9]  & 0b11000000) >> 6) | (key[10] << 2)        | ((key[11] & 15) << 10) | ((key[12] & 252) << 18);
+  r[4] = ((key[13] & 0b11111111) >> 0) | (key[14] << 8)        | ((key[15] & 15) << 16);
+  r[5] = 0;
+
+  for (j = 0;j < 6;++j) h[j] = 0;
+
+  while (inlen > 0) {
     for (j = 0;j < 6;++j) c[j] = 0;
 
     // copy input block
@@ -199,35 +169,32 @@ static void load_input_block(unsigned int c[6], unsigned long long inlen, const 
     }
     if (inlen == 2) c[0] |= 1 << 16; else if (inlen > 2) c[0] |= in_msg[2] << 16;
     if (inlen == 1) c[0] |= 1 << 8; else if (inlen > 1) c[0] |= in_msg[1] << 8;
-    c[0] |= in_msg[0]; 
-}
+    c[0] |= in_msg[0];
+     
+    if (inlen < 16) {
+        in_msg += inlen;
+        inlen -= inlen;
+    } else {
+        in_msg += 16;
+        inlen -= 16;
+    }
 
-int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_msg,unsigned long long inlen,const unsigned char *key)
-{
-  unsigned int j;
-  unsigned int c[6], h[6], r[6];
-  
-  r[0] = ((key[0]  & 0b11111111) >> 0) | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
-  r[1] = ((key[3]  & 0b00001100) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14)         | ((key[6]  & 0b00001111) << 22);
-  r[2] = ((key[6]  & 0b11110000) >> 4) | ((key[7] &  15) << 4) | ((key[8] & 252) << 12) | ((key[9]  & 0b00111111) << 20);
-  r[3] = ((key[9]  & 0b11000000) >> 6) | (key[10] << 2)        | ((key[11] & 15) << 10) | ((key[12] & 252) << 18);
-  r[4] = ((key[13] & 0b11111111) >> 0) | (key[14] << 8)        | ((key[15] & 15) << 16);
-  r[5] = 0;
-
-  for (j = 0;j < 6;++j) h[j] = 0;
-
-  while (inlen > 0) {
-    load_input_block(c, inlen, in_msg); 
-    j = 16; if (inlen < j) j = inlen;
-    in_msg += j;
-    inlen -= j;
-
-    add(h, c);
-    mulmod_6(h,r);
+    add(h, c);    
+    mulmod(h,r);
   }
-
   
-  freeze(h);
+  // freeze 
+  // unsigned int horig[6]; use r, since its no longer needed now
+  unsigned int negative;
+  for (j = 0;j < 6;++j) {
+    r[j] = h[j];
+  }
+  add(h,minusp);
+  negative = -(h[5] >> 25);
+  for (j = 0;j < 6;++j) {
+    h[j] ^= negative & (r[j] ^ h[j]);
+  }
+  // end of freeze
   
   c[0] = ((key[16] & 0b11111111) >> 0) | (key[17] << 8) | (key[18] << 16) | ((key[19]  & 0b00000011) << 24);
   c[1] = ((key[19] & 0b11111100) >> 2) | (key[20] << 6) | (key[21] << 14) | ((key[22]  & 0b00001111) << 22);
@@ -235,7 +202,7 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
   c[3] = ((key[25] & 0b11000000) >> 6) | (key[26] << 2) | (key[27] << 10) | (key[28] << 18);
   c[4] = ((key[29] & 0b11111111) >> 0) | (key[30] << 8) | (key[31] << 16);
   
-  add(h,c);
+  add(h, c);
   
   out_mac[0]  = h[0] & 0xff;                                           // 0b00000000000000000011111111
   out_mac[1]  = (h[0]  >> 8)   & 0xff;                                 // 0b00000000001111111100000000
