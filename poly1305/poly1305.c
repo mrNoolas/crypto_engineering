@@ -28,29 +28,8 @@ static void squeeze(unsigned int h[6]) {
     u >>= 26;
   }
   u += h[5];
-  h[5] = 0;
   u *= 5;
-  for (j = 0;j < 5;++j) {
-    u += h[j];
-    h[j] = u & 67108863;
-    u >>= 26;
-  }
-  u += h[5];
-  h[5] = u;
-}
-
-static void squeeze_64(unsigned long long h[6]) {
-  unsigned int j;
-  unsigned long long u;
-  u = 0;
-  for (j = 0; j < 5; ++j) {
-    u += h[j];
-    h[j] = u & 67108863;
-    u >>= 26;
-  }
-  u += h[5];
   h[5] = 0;
-  u *= 5;
   for (j = 0;j < 5;++j) {
     u += h[j];
     h[j] = u & 67108863;
@@ -97,25 +76,38 @@ void translate6_17(unsigned int in[6], unsigned int out[17])
 
 static void mulmod(unsigned int h[6],const unsigned int r[6]) {
     unsigned long long hr[6];
-    unsigned int i;
     
     squeeze(h);
-    unsigned long long b0 = r[0];
-    unsigned long long b1 = r[1];
-    unsigned long long b2 = r[2];
-    unsigned long long b3 = r[3];
-    unsigned long long b4 = r[4];
-    hr[0] = h[0]*b0 + h[1]*b4*5 + h[2]*b3*5 + h[3]*b2*5 + h[4]*b1*5;
-    hr[1] = h[0]*b1 + h[1]*b0   + h[2]*b4*5 + h[3]*b3*5 + h[4]*b2*5;
-    hr[2] = h[0]*b2 + h[1]*b1   + h[2]*b0   + h[3]*b4*5 + h[4]*b3*5;
-    hr[3] = h[0]*b3 + h[1]*b2   + h[2]*b1   + h[3]*b0   + h[4]*b4*5;
-    hr[4] = h[0]*b4 + h[1]*b3   + h[2]*b2   + h[3]*b1   + h[4]*b0  ;
+    hr[0] = (unsigned long long) h[0]*r[0] + (unsigned long long) h[1]*r[4]*5 + (unsigned long long) h[2]*r[3]*5 
+                + (unsigned long long) h[3]*r[2]*5 + (unsigned long long) h[4]*r[1]*5;
+    hr[1] = (unsigned long long) h[0]*r[1] + (unsigned long long) h[1]*r[0]   + (unsigned long long) h[2]*r[4]*5 
+                + (unsigned long long) h[3]*r[3]*5 + (unsigned long long) h[4]*r[2]*5;
+    hr[2] = (unsigned long long) h[0]*r[2] + (unsigned long long) h[1]*r[1]   + (unsigned long long) h[2]*r[0]   
+                + (unsigned long long) h[3]*r[4]*5 + (unsigned long long) h[4]*r[3]*5;
+    hr[3] = (unsigned long long) h[0]*r[3] + (unsigned long long) h[1]*r[2]   + (unsigned long long) h[2]*r[1]   
+                + (unsigned long long) h[3]*r[0]   + (unsigned long long) h[4]*r[4]*5;
+    hr[4] = (unsigned long long) h[0]*r[4] + (unsigned long long) h[1]*r[3]   + (unsigned long long) h[2]*r[2]   
+                + (unsigned long long) h[3]*r[1]   + (unsigned long long) h[4]*r[0]  ;
     hr[5] = 0;
-    squeeze_64(hr);
-  
-    for (i = 0;i < 6;++i) {
-    h[i] = hr[i];
+    
+    // squeeze 64 bit and write to h
+    unsigned int j;
+    unsigned long long u;
+    u = 0;
+    for (j = 0; j < 5; ++j) {
+        u += hr[j];
+        h[j] = u & 67108863;
+        u >>= 26;
     }
+    u += hr[5];
+    u *= 5;
+    h[5] = 0;
+    for (j = 0;j < 5;++j) {
+        u += h[j];
+        h[j] = u & 67108863;
+        u >>= 26;
+    }
+    h[5] += u;
 }
 
 static const unsigned int minusp[6] = {5, 0, 0, 0, 0, 0xffffffff} ;
@@ -124,11 +116,11 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
 {
   unsigned int c[6], h[6], r[6];
   
-  r[0] = ((key[0]  & 0b11111111) >> 0) | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
+  r[0] =  key[0]                       | (key[1] << 8)         | (key[2] << 16)         | ((key[3]  & 0b00000011) << 24);
   r[1] = ((key[3]  & 0b00001100) >> 2) | ((key[4] & 252) << 6) | (key[5] << 14)         | ((key[6]  & 0b00001111) << 22);
   r[2] = ((key[6]  & 0b11110000) >> 4) | ((key[7] &  15) << 4) | ((key[8] & 252) << 12) | ((key[9]  & 0b00111111) << 20);
   r[3] = ((key[9]  & 0b11000000) >> 6) | (key[10] << 2)        | ((key[11] & 15) << 10) | ((key[12] & 252) << 18);
-  r[4] = ((key[13] & 0b11111111) >> 0) | (key[14] << 8)        | ((key[15] & 15) << 16);
+  r[4] =  key[13]                      | (key[14] << 8)        | ((key[15] & 15) << 16);
   r[5] = 0;
 
   h[0] = 0; h[1] = 0; h[2] = 0; h[3] = 0; h[4] = 0; h[5] = 0;
@@ -138,10 +130,10 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
     c[0] = in_msg[0]; c[1] = 0; c[2] = 0; c[3] = 0; c[4] = 0; c[5] = 0; // reset c
     if (inlen >= 16) { // most common case
         c[0] |= in_msg[1] << 8 | in_msg[2] << 16 | (in_msg[3] & 0b00000011) << 24;
-        c[1] = (in_msg[3] & 0b11111100) >> 2 | in_msg[4] << 6 | in_msg[5] << 14 | (in_msg[6] & 0b00001111) << 22;
-        c[2] = (in_msg[6] & 0b11110000) >> 4 | in_msg[7] << 4 | in_msg[8] << 12 | (in_msg[9] & 0b00111111) << 20;
-        c[3] = (in_msg[9] & 0b11000000) >> 6 | in_msg[10] << 2 | in_msg[11] << 10 | in_msg[12] << 18;
-        c[4] = in_msg[13] | in_msg[14] << 8 | in_msg[15] << 16 | (1 << 24);
+        c[1] =  in_msg[3] >> 2 | in_msg[4] << 6  | in_msg[5] << 14  | (in_msg[6] & 0b00001111) << 22;
+        c[2] =  in_msg[6] >> 4 | in_msg[7] << 4  | in_msg[8] << 12  | (in_msg[9] & 0b00111111) << 20;
+        c[3] =  in_msg[9] >> 6 | in_msg[10] << 2 | in_msg[11] << 10 | in_msg[12] << 18;
+        c[4] =  in_msg[13]     | in_msg[14] << 8 | in_msg[15] << 16 | (1 << 24);
         
         in_msg += 16;
         inlen -= 16;
@@ -153,21 +145,21 @@ int crypto_onetimeauth_poly1305(unsigned char *out_mac,const unsigned char *in_m
             if (inlen == 2) c[0] |= 1 << 16; else {
                 c[0] |= in_msg[2] << 16;
                 if (inlen == 3) c[0] |= 1 << 24; else {
-                    c[1] |= (in_msg[3] & 0b11111100) >> 2;
+                    c[1] |= in_msg[3] >> 2;
                     c[0] |= (in_msg[3] & 0b00000011) << 24;
                     if (inlen == 4) c[1] |= 1 << 6;  else {
                         c[1] |= in_msg[4] << 6;
                         if (inlen == 5) c[1] |= 1 << 14; else {
                             c[1] |= in_msg[5] << 14;
                             if (inlen == 6) c[1] |= 1 << 22; else  {
-                                c[2] |= (in_msg[6] & 0b11110000) >> 4;
+                                c[2] |= in_msg[6] >> 4;
                                 c[1] |= (in_msg[6] & 0b00001111) << 22;
                                 if (inlen == 7) c[2] |= 1 << 4;  else {
                                     c[2] |= in_msg[7] << 4;
                                     if (inlen == 8) c[2] |= 1 << 12; else {
                                         c[2] |= in_msg[8] << 12;
                                         if (inlen == 9) c[2] |= 1 << 20; else {
-                                            c[3] |= (in_msg[9] & 0b11000000) >> 6;
+                                            c[3] |= in_msg[9] >> 6;
                                             c[2] |= (in_msg[9] & 0b00111111) << 20;
                                             if (inlen == 10) c[3] |= 1 << 2;  else {
                                                 c[3] |= in_msg[10] << 2;
