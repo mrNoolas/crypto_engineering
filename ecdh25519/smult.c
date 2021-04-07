@@ -63,6 +63,10 @@ int crypto_scalarmult(unsigned char *ss, const unsigned char *sk, const unsigned
     t[i] = sk[i];
   }
 
+  unsigned int tmp[10];
+  convert32_10((int)t, tmp);
+  convert10_32(tmp, (char)t);
+
   t[0] &= 248;
   t[31] &= 127;
   t[31] |= 64;
@@ -75,10 +79,9 @@ int crypto_scalarmult(unsigned char *ss, const unsigned char *sk, const unsigned
     for(;j>=0;j--)
     {
       group_ge_double(&k, &k);
-      group_ge t;
-      group_ge_add(&t, &k, &p);
-      bool b = (t[i] >> j /*shift op basis key*/) & 1)
-      *k = b & *t ^ (1 - b) & *k
+      if((t[i] >> j) & 1) {
+        group_ge_add(&k, &k, &p);
+      }
     }
     j = 7;
   }
