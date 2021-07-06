@@ -11,16 +11,16 @@ const fe25519 fe25519_one  = {{1}};
 const fe25519 fe25519_two  = {{2}};
 
 /* sqrt(-1) */
-const fe25519 fe25519_sqrtm1 = {{0xB0, 0xA0, 0x0E, 0x4A, 0x27, 0x1B, 0xEE, 0xC4, 0x78, 0xE4, 0x2F, 0xAD, 0x06, 0x18, 0x43, 0x2F,
-                                 0xA7, 0xD7, 0xFB, 0x3D, 0x99, 0x00, 0x4D, 0x2B, 0x0B, 0xDF, 0xC1, 0x4F, 0x80, 0x24, 0x83, 0x2B}};
+const fe25519 fe25519_sqrtm1 = {{0x0EA0B0, 0x1B274A, 0x78C4EE, 0xAD2FE4, 0x431806, 0xD7A72F, 0x993DFB,
+                                 0x2B4D00, 0xC1DF0B, 0x24804F, 0x2B83}};
 
 /* -sqrt(-1) */
-const fe25519 fe25519_msqrtm1 = {{0x3D, 0x5F, 0xF1, 0xB5, 0xD8, 0xE4, 0x11, 0x3B, 0x87, 0x1B, 0xD0, 0x52, 0xF9, 0xE7, 0xBC, 0xD0,
-                                  0x58, 0x28, 0x4, 0xC2, 0x66, 0xFF, 0xB2, 0xD4, 0xF4, 0x20, 0x3E, 0xB0, 0x7F, 0xDB, 0x7C, 0x54}};
+const fe25519 fe25519_msqrtm1 = {{0xF15F3D, 0xE4D8B5, 0x873B11, 0x52D01B, 0xBCE7F9, 0x2858D0, 0x66C204,
+                                       0xD4B2FF, 0x3E20F4, 0xDB7FB0, 0x547C}};
 
 /* -1 */
-const fe25519 fe25519_m1 = {{236, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f}};
+const fe25519 fe25519_m1 = {{0xffffec, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xffffff,
+                                  0xffffff, 0xffffff, 0xffffff, 0x7fff}};
 
 
 
@@ -41,14 +41,14 @@ static uint32_t ge(uint32_t a,uint32_t b) /* 16-bit inputs */
   return x;
 }
 
-static uint32_t times19(uint32_t a)
+static uint64_t times19(uint64_t a)
 {
   return (a << 4) + (a << 1) + a;
 }
 
-static uint32_t times38(uint32_t a)
+static uint64_t times9728(uint64_t a)
 {
-  return (a << 5) + (a << 2) + (a << 1);
+  return (a << 13) + (a << 10) + (a << 9);
 }
 
 static void reduce_add_sub(fe25519 *r)
@@ -58,71 +58,80 @@ static void reduce_add_sub(fe25519 *r)
 
   for(rep=0;rep<2;rep++)
   {
-    t = r->v[31] >> 7;
-    r->v[31] &= 127;
+    t = r->v[10] >> 15;
+    r->v[10] &= 32767; //2^15-1
     t = times19(t);
     r->v[0] += t;
-    for(i=0;i<31;i++)
+    for(i=0;i<10;i++)
     {
-      t = r->v[i] >> 8;
+      t = r->v[i] >> 24;
       r->v[i+1] += t;
-      r->v[i] &= 255;
+      r->v[i] &= 16777215; //2^24-1
     }
   }
 }
 
-static void reduce_mul(fe25519 *r)
+static void reduce_mul(fe25519 *r, uint64_t result[11])
 {
-  uint32_t t;
+  uint64_t t;
   int i,rep;
 
   for(rep=0;rep<3;rep++)
   {
-    t = r->v[31] >> 7;
-    r->v[31] &= 127;
+    t = result[10] >> 15;
+    result[10] &= 32767; //2^15-1
     t = times19(t);
-    r->v[0] += t;
-    for(i=0;i<31;i++)
+    result[0] += t;
+    for(i=0;i<10;i++)
     {
-      t = r->v[i] >> 8;
-      r->v[i+1] += t;
-      r->v[i] &= 255;
+      t = result[i] >> 24;
+      result[i+1] += t;
+      result[i] &= 16777215; //2^24-1
     }
+  }
+  for (i = 0;i < 11; i++) {
+    r->v[i] = result[i];
   }
 }
 
-/* reduction modulo 2^255-19 */
+/* This is reduction modulo 2^255-19 */
 void fe25519_freeze(fe25519 *r)
 {
   int i;
-  uint32_t m = equal(r->v[31],127);
-  for(i=30;i>0;i--)
-    m &= equal(r->v[i],255);
-  m &= ge(r->v[0],237);
+  uint32_t m = equal(r->v[10], 32767);//2^15-1
+  for(i=9;i>0;i--)
+    m &= equal(r->v[i], 16777215);//2^24-1
+  m &= ge(r->v[0], 16777197);//2^24-1
 
   m = -m;
 
-  r->v[31] -= m&127;
-  for(i=30;i>0;i--)
-    r->v[i] -= m&255;
-  r->v[0] -= m&237;
+  r->v[10] -= m&32767;//2^15-1
+  for(i=9;i>0;i--)
+    r->v[i] -= m&16777215;//2^24-1
+  r->v[0] -= m&16777197;//2^24-1
 }
 
 void fe25519_unpack(fe25519 *r, const unsigned char x[32])
 {
   int i;
-  for(i=0;i<32;i++) r->v[i] = x[i];
-  r->v[31] &= 127;
+
+  for(i=0;i<30;i = i + 3) {
+    r->v[i/3] = ((uint32_t)x[i]) | ((uint32_t)x[i+1] << 8) |  ((uint32_t)x[i+2] << 16);
+  }
+
+  r->v[10] = ((uint32_t)x[30]) | ((uint32_t)x[31] << 8);
+  r->v[10] &= 32767;//2^15-1
 }
 
-/* Assumes input x being reduced below 2^255 */
+/* This assumes the input x is being reduced below 2^255 */
 void fe25519_pack(unsigned char r[32], const fe25519 *x)
 {
   int i;
   fe25519 y = *x;
   fe25519_freeze(&y);
-  for(i=0;i<32;i++)
-    r[i] = y.v[i];
+  for(i=0;i<32;i++) {
+    r[i] = y.v[i/3] >> 8*(i%3);
+  }
 }
 
 int fe25519_iszero(const fe25519 *x)
@@ -135,7 +144,7 @@ int fe25519_isone(const fe25519 *x)
   return fe25519_iseq(x, &fe25519_one);
 }
 
-// return true if x has LSB set
+/* This returns true if x has LSB set */
 int fe25519_isnegative(const fe25519 *x)
 {
   fe25519 t = *x;
@@ -154,20 +163,21 @@ int fe25519_iseq(const fe25519 *x, const fe25519 *y)
   t2 = *y;
   fe25519_freeze(&t1);
   fe25519_freeze(&t2);
-  for(i=0;i<32;i++)
+  for(i=0;i<11;i++)
     r |= (1-equal(t1.v[i],t2.v[i]));
   return 1-r;
 }
 
 void fe25519_cmov(fe25519 *r, const fe25519 *x, unsigned char b)
 {
-  /* time leakage */
-  fe25519 tmp_r = *r;
-  fe25519 tmp_x = *x;
-  if(b)
-    {*r = tmp_x;}
-  else
-    {*r = tmp_r;}
+  unsigned char *y = (unsigned char *)r;
+  unsigned char *z = (unsigned char *)x;
+
+  unsigned int i;
+  b = -b;
+
+  for(i=0;i<sizeof(fe25519);i++)
+    y[i] = (~b & y[i]) ^ (b & z[i]);
 }
 
 void fe25519_neg(fe25519 *r, const fe25519 *x)
@@ -179,43 +189,44 @@ void fe25519_neg(fe25519 *r, const fe25519 *x)
 void fe25519_add(fe25519 *r, const fe25519 *x, const fe25519 *y)
 {
   int i;
-  for(i=0;i<32;i++) r->v[i] = x->v[i] + y->v[i];
+  for(i=0;i<11;i++) r->v[i] = x->v[i] + y->v[i];
   reduce_add_sub(r);
 }
 
 void fe25519_double(fe25519 *r, const fe25519 *x)
 {
   int i;
-  for(i=0;i<32;i++) r->v[i] = 2*x->v[i];
+  for(i=0;i<11;i++) r->v[i] = 2*x->v[i];
   reduce_add_sub(r);
 }
 
 void fe25519_sub(fe25519 *r, const fe25519 *x, const fe25519 *y)
 {
   int i;
-  uint32_t t[32];
-  t[0] = x->v[0] + 0x1da;
-  t[31] = x->v[31] + 0xfe;
-  for(i=1;i<31;i++) t[i] = x->v[i] + 0x1fe;
-  for(i=0;i<32;i++) r->v[i] = t[i] - y->v[i];
+  uint32_t t[11];
+  t[0] = x->v[0] + 0xffffed; //0x1da + 2^8 * 0x1fe + 2^16 * 0x1fe = 474 + 2^8 * 510 + 2^16 * 510
+  for(i=1;i<10;i++) t[i] = x->v[i] + 0xffffff; //0x1fe + 2^8 * 0x1fe + 2^16 * 0x1fe = 510 + 2^8 * 510 + 2^16 * 510
+  t[10] = x->v[10] + 0x7fff; //0x1fe + 2^8 * xfe = 510 + 2^8 * 254
+
+  for(i=0;i<11;i++) r->v[i] = t[i] - y->v[i];
   reduce_add_sub(r);
 }
 
 void fe25519_mul(fe25519 *r, const fe25519 *x, const fe25519 *y)
 {
   int i,j;
-  uint32_t t[63];
-  for(i=0;i<63;i++)t[i] = 0;
+  uint64_t t[21] = {0};
+  uint64_t result[11];
 
-  for(i=0;i<32;i++)
-    for(j=0;j<32;j++)
-      t[i+j] += x->v[i] * y->v[j];
+  for(i=0;i<11;i++)
+    for(j=0;j<11;j++)
+      t[i+j] += (uint64_t)(x->v[i]) * (uint64_t)(y->v[j]);
 
-  for(i=32;i<63;i++)
-    r->v[i-32] = t[i-32] + times38(t[i]);
-  r->v[31] = t[31]; /* result now in r[0]...r[31] */
+  for(i=11;i<21;i++)
+    result[i-11] = t[i-11] + times9728(t[i]);
+  result[10] = t[10];
 
-  reduce_mul(r);
+  reduce_mul(r, result);
 }
 
 void fe25519_square(fe25519 *r, const fe25519 *x)

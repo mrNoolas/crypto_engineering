@@ -2,21 +2,21 @@
 #include <assert.h> //XXX: DEBUG
 #include "group.h"
 
-/* 
- * Arithmetic on the twisted Edwards curve -x^2 + y^2 = 1 + dx^2y^2 
+/*
+ * Arithmetic on the twisted Edwards curve -x^2 + y^2 = 1 + dx^2y^2
  * with d = -(121665/121666) = 37095705934669439343138083508754565189542113879843219016388785533085940283555
  * Base point: (15112221349535400772501151409588531511454012693041857206046113283949847762202,46316835694926478169428394003475163141307993866256225615783033603165251855960);
  */
 
 /* d */
-static const fe25519 ge25519_ecd = {{0xA3, 0x78, 0x59, 0x13, 0xCA, 0x4D, 0xEB, 0x75, 0xAB, 0xD8, 0x41, 0x41, 0x4D, 0x0A, 0x70, 0x00, 
-                      0x98, 0xE8, 0x79, 0x77, 0x79, 0x40, 0xC7, 0x8C, 0x73, 0xFE, 0x6F, 0x2B, 0xEE, 0x6C, 0x03, 0x52}};
+static const fe25519 ge25519_ecd = {{0x5978A3, 0x4DCA13, 0xAB75EB, 0x4141D8,
+  0x700A4D, 0xE89800, 0x797779, 0x8CC740, 0x6FFE73, 0x6CEE2B, 0x5203}};
 /* 2*d */
-static const fe25519 ge25519_ec2d = {{0x59, 0xF1, 0xB2, 0x26, 0x94, 0x9B, 0xD6, 0xEB, 0x56, 0xB1, 0x83, 0x82, 0x9A, 0x14, 0xE0, 0x00, 
-                       0x30, 0xD1, 0xF3, 0xEE, 0xF2, 0x80, 0x8E, 0x19, 0xE7, 0xFC, 0xDF, 0x56, 0xDC, 0xD9, 0x06, 0x24}};
+static const fe25519 ge25519_ec2d = {{0xB2F159, 0x9B9426, 0x56EBD6, 0x8283B1,
+  0xE0149A, 0xD13000, 0xF2EEF3, 0x198E80, 0xDFFCE7, 0xD9DC56, 0x2406}};
 
-static const fe25519 ge25519_magic = {{0x3, 0xBF, 0xA2, 0x7F, 0x55, 0x2, 0x37, 0x66, 0x41, 0x8D, 0xBE, 0xA5, 0xE8, 0xE9, 0xD0, 0x62, 
-                       0xBF, 0x27, 0xFE, 0x1, 0x6E, 0x84, 0x3D, 0xE9, 0x5D, 0x3, 0x50, 0x30, 0xFA, 0x76, 0x93, 0x7}};
+static const fe25519 ge25519_magic = {{0xA2BF03, 0x2557F, 0x416637, 0xA5BE8D,
+  0xD0E9E8, 0x27BF62, 0x6E01FE, 0xE93D84, 0x50035D, 0x76FA30, 0x793}};
 
 const group_ge group_ge_neutral = {{{0}},
                                    {{1}},
@@ -63,7 +63,7 @@ static void p1p1_to_p3(ge25519_p3 *r, const ge25519_p1p1 *p)
 static void add_p1p1(ge25519_p1p1 *r, const ge25519_p3 *p, const ge25519_p3 *q)
 {
   fe25519 a, b, c, d, t;
-  
+
   fe25519_sub(&a, &p->y, &p->x); /* A = (Y1-X1)*(Y2-X2) */
   fe25519_sub(&t, &q->y, &q->x);
   fe25519_mul(&a, &a, &t);
@@ -99,20 +99,19 @@ static void dbl_p1p1(ge25519_p1p1 *r, const ge25519_p2 *p)
   fe25519_sub(&r->y, &d, &b);
 }
 
-const group_ge group_ge_base = {{{0x1A, 0xD5, 0x25, 0x8F, 0x60, 0x2D, 0x56, 0xC9, 0xB2, 0xA7, 0x25, 0x95, 0x60, 0xC7, 0x2C, 0x69, 
-                                0x5C, 0xDC, 0xD6, 0xFD, 0x31, 0xE2, 0xA4, 0xC0, 0xFE, 0x53, 0x6E, 0xCD, 0xD3, 0x36, 0x69, 0x21}},
-                              {{0x58, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 
-                                0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66}},
-                              {{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
-                              {{0xA3, 0xDD, 0xB7, 0xA5, 0xB3, 0x8A, 0xDE, 0x6D, 0xF5, 0x52, 0x51, 0x77, 0x80, 0x9F, 0xF0, 0x20, 
-                                0x7D, 0xE3, 0xAB, 0x64, 0x8E, 0x4E, 0xEA, 0x66, 0x65, 0x76, 0x8B, 0xD7, 0x0F, 0x5F, 0x87, 0x67}}};
-
-
+const group_ge group_ge_base = {
+  {{0x25D51A, 0x2D608F, 0xB2C956, 0x9525A7, 0x2CC760, 0xDC5C69,
+    0x31FDD6, 0xC0A4E2, 0x6E53FE, 0x36D3CD, 0x2169}},
+  {{0x666658, 0x666666, 0x666666, 0x666666, 0x666666, 0x666666,
+    0x666666, 0x666666, 0x666666, 0x666666, 0x6666}},
+  {{0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00}},
+  {{0xB7DDA3, 0x8AB3A5, 0xF56DDE, 0x775152, 0xF09F80, 0xE37D20,
+    0x8E64AB, 0x66EA4E, 0x8B7665, 0x5F0FD7, 0x6787}}};
 
 /* Packing and unpacking is using Hamburg's "ristretto" approach. See
  * https://eprint.iacr.org/2015/673 and
- * https://ristretto.group/ 
+ * https://ristretto.group/
  */
 int group_ge_unpack(group_ge *r, const unsigned char x[GROUP_GE_PACKEDBYTES])
 {
@@ -130,7 +129,7 @@ int group_ge_unpack(group_ge *r, const unsigned char x[GROUP_GE_PACKEDBYTES])
   fe25519_square(&s2, &s);
   fe25519_add(&yden,&fe25519_one,&s2);
   fe25519_sub(&ynum,&fe25519_one,&s2);
-  
+
   /* yden_sqr = yden^2 */
   /* xden_sqr = a*d*ynum^2 - yden_sqr */
   fe25519_square(&yden2, &yden);
@@ -138,7 +137,7 @@ int group_ge_unpack(group_ge *r, const unsigned char x[GROUP_GE_PACKEDBYTES])
   fe25519_mul(&xden2, &xden2, &ge25519_ecd); // d*ynum^2
   fe25519_add(&xden2, &xden2, &yden2); // d*ynum2+yden2
   fe25519_neg(&xden2, &xden2); // -d*ynum2-yden2
-  
+
   /* isr = isqrt(xden_sqr * yden_sqr) */
   fe25519_mul(&t, &xden2, &yden2);
   fe25519_invsqrt(&isr, &t);
@@ -151,8 +150,8 @@ int group_ge_unpack(group_ge *r, const unsigned char x[GROUP_GE_PACKEDBYTES])
 
   /* xden_inv = isr * yden */
   fe25519_mul(&xdeninv, &isr, &yden);
-  
-        
+
+
   /* yden_inv = xden_inv * isr * xden_sqr */
   fe25519_mul(&ydeninv, &xdeninv, &isr);
   fe25519_mul(&ydeninv, &ydeninv, &xden2);
@@ -166,7 +165,7 @@ int group_ge_unpack(group_ge *r, const unsigned char x[GROUP_GE_PACKEDBYTES])
   fe25519_neg(&t, &r->x);
   fe25519_cmov(&r->x, &t, b);
 
-        
+
   /* y = ynum * yden_inv */
   fe25519_mul(&r->y, &ynum, &ydeninv);
 
@@ -190,7 +189,7 @@ int group_ge_unpack(group_ge *r, const unsigned char x[GROUP_GE_PACKEDBYTES])
 
 /* Packing and unpacking is using Hamburg's "ristretto" approach. See
  * https://eprint.iacr.org/2015/673 and
- * https://ristretto.group/ 
+ * https://ristretto.group/
  */
 void group_ge_pack(unsigned char r[GROUP_GE_PACKEDBYTES], const group_ge *x)
 {
@@ -212,7 +211,7 @@ void group_ge_pack(unsigned char r[GROUP_GE_PACKEDBYTES], const group_ge *x)
 
   /* i1    = isr*u1 # sqrt(mneg*(z+y)*(z-y))/(x*y) */
   fe25519_mul(&i1, &isr, &u1);
-  
+
   /* i2    = isr*u2 # 1/sqrt(a*(y+z)*(y-z)) */
   fe25519_mul(&i2, &isr, &u2);
 
@@ -238,7 +237,6 @@ void group_ge_pack(unsigned char r[GROUP_GE_PACKEDBYTES], const group_ge *x)
   fe25519_mul(&d, &nx, &zinv);
   b = fe25519_isnegative(&d);
   fe25519_neg(&d, &ny);
-
   fe25519_cmov(&ny, &d, b);
 
   /* s = (z-y) * den_inv */
@@ -248,9 +246,7 @@ void group_ge_pack(unsigned char r[GROUP_GE_PACKEDBYTES], const group_ge *x)
   /* return self.gfToBytes(s,mustBePositive=True) */
   b = fe25519_isnegative(&s);
   fe25519_neg(&d, &s);
-
   fe25519_cmov(&s, &d, b);
-
   fe25519_pack(r, &s);
 }
 
@@ -266,4 +262,48 @@ void group_ge_double(group_ge *r, const group_ge *x)
   ge25519_p1p1 t;
   dbl_p1p1(&t, (ge25519_p2 *)x);
   p1p1_to_p3(r,&t);
+}
+
+//---------------------------------
+
+unsigned char int_eq(int a, int b)
+{
+  unsigned long long t = a ^ b;
+
+  t = (-t) >> 63;
+
+  return 1-t;
+}
+
+void compute(group_ge r[16]) {
+  r[0] = group_ge_neutral;
+
+  for(int i = 0; i < 15; i++) {
+    group_ge_add(r + i + 1, r + i, &group_ge_base);
+  }
+}
+
+void group_ge_cmov(group_ge *r, const group_ge *t, unsigned char b)
+{
+  unsigned char *x = (unsigned char *)r;
+  unsigned char *y = (unsigned char *)t;
+
+  int i;
+  b = -b;
+
+  for(i=0;i<sizeof(group_ge);i++)
+    x[i] = (~b & x[i]) ^ (b & y[i]);
+}
+
+void group_ge_lookup(group_ge *t, const group_ge *table, int pos)
+{
+  int i;
+  unsigned char b;
+  *t = table[0];
+
+  for(i=0;i<16;i++)
+  {
+    b = int_eq(i, pos);
+    group_ge_cmov(t, table+i, b);
+  }
 }

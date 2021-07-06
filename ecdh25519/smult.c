@@ -1,98 +1,123 @@
 #include "group.h"
 #include "smult.h"
+#include <stdio.h>
+#include <stdbool.h>
 
-void convert32_10(unsigned int in[32], unsigned int out[10])
-{
-  out[0] = ((in[0]  & 0b11111111) >> 0) | (in[1]  << 8) | (in[2] << 16)  | ((in[3]  & 0b00000011) << 24);
-  out[1] = ((in[3]  & 0b11111100) >> 2) | (in[4]  << 6) | (in[5] << 14)  | ((in[6]  & 0b00001111) << 22);
-  out[2] = ((in[6]  & 0b11110000) >> 4) | (in[7]  << 4) | (in[8] << 12)  | ((in[9]  & 0b00111111) << 20);
-  out[3] = ((in[9]  & 0b11000000) >> 6) | (in[10] << 2) | (in[11] << 10) | ((in[12] & 0b11111111) << 18);
-  out[4] = ((in[13] & 0b11111111) >> 0) | (in[14] << 8) | (in[15] << 16) | ((in[16] & 0b00000011) << 24);
-  out[5] = ((in[16] & 0b11111100) >> 2) | (in[17] << 6) | (in[18] << 14) | ((in[19] & 0b00001111) << 22);
-  out[6] = ((in[19] & 0b11110000) >> 4) | (in[20] << 4) | (in[21] << 12) | ((in[22] & 0b00111111) << 20);
-  out[7] = ((in[22] & 0b11000000) >> 6) | (in[23] << 2) | (in[24] << 10) | ((in[25] & 0b11111111) << 18);
-  out[8] = ((in[26] & 0b11111111) >> 0) | (in[27] << 8) | (in[28] << 16) | ((in[29] & 0b00000011) << 24);
-  out[9] = ((in[29] & 0b11111100) >> 2) | (in[30] << 6) | (in[31] << 14);
-}
+group_ge preComputed[16];
+bool alreadyComputed = false;
 
-void convert10_32(unsigned int in[10], unsigned int out[32])
-{
-  // 0b11 1111 1111  1111 1111  1111 1111
-  out[0]  = in[0] & 0xff;           // 0b00000000000000000011111111
-  out[1]  = (in[0]  >> 8)   & 0xff; // 0b00000000001111111100000000
-  out[2]  = (in[0]  >> 16)  & 0xff; // 0b00111111110000000000000000
-  out[3]  = ((in[0] >> 24)  & 0x03) | ((in[1] << 2) & 0b11111100); // 0b11000000000000000000000000 and 0b00000000000000000000111111
-  out[4]  = (in[1]  >> 6)   & 0xff; // 0b00000000000011111111000000
-  out[5]  = (in[1]  >> 14)  & 0xff; // 0b00001111111100000000000000
-  out[6]  = ((in[1] >> 22)  & 0x0f) | ((in[2] << 4) & 0b11110000); // 0b11110000000000000000000000 and 0b00000000000000000000001111
-  out[7]  = (in[2]  >> 4)   & 0xff; // 0b00000000000000111111110000
-  out[8]  = (in[2]  >> 12)  & 0xff; // 0b00000011111111000000000000
-  out[9]  = ((in[2] >> 20)  & 0x3f) | ((in[3] << 6) & 0b11000000); // 0b11111100000000000000000000 and 0b00000000000000000000000011
-  out[10] = (in[3]  >> 2)   & 0xff; // 0b00000000000000001111111100
-  out[11] = (in[3]  >> 10)  & 0xff; // 0b00000000111111110000000000
-  out[12] = (in[3]  >> 18)  & 0xff; // 0b11111111000000000000000000
-  out[13]  = in[4] & 0xff;           // 0b00000000000000000011111111
-  out[14]  = (in[4]  >> 8)   & 0xff; // 0b00000000001111111100000000
-  out[15]  = (in[4]  >> 16)  & 0xff; // 0b00111111110000000000000000
-  out[16]  = ((in[4] >> 24)  & 0x03) | ((in[5] << 2) & 0b11111100); // 0b11000000000000000000000000 and 0b00000000000000000000111111
-  out[17]  = (in[5]  >> 6)   & 0xff; // 0b00000000000011111111000000
-  out[18]  = (in[5]  >> 14)  & 0xff; // 0b00001111111100000000000000
-  out[19]  = ((in[5] >> 22)  & 0x0f) | ((in[6] << 4) & 0b11110000); // 0b11110000000000000000000000 and 0b00000000000000000000001111
-  out[20]  = (in[6]  >> 4)   & 0xff; // 0b00000000000000111111110000
-  out[21]  = (in[6]  >> 12)  & 0xff; // 0b00000011111111000000000000
-  out[22]  = ((in[6] >> 20)  & 0x3f) | ((in[7] << 6) & 0b11000000); // 0b11111100000000000000000000 and 0b00000000000000000000000011
-  out[23] = (in[7]  >> 2)   & 0xff; // 0b00000000000000001111111100
-  out[24] = (in[7]  >> 10)  & 0xff; // 0b00000000111111110000000000
-  out[25] = (in[7]  >> 18)  & 0xff; // 0b11111111000000000000000000
-  out[26]  = in[8] & 0xff;           // 0b00000000000000000011111111
-  out[27]  = (in[8]  >> 8)   & 0xff; // 0b00000000001111111100000000
-  out[28]  = (in[8]  >> 16)  & 0xff; // 0b00111111110000000000000000
-  out[29]  = ((in[8] >> 24)  & 0x03) | ((in[1] << 2) & 0b11111100); // 0b11000000000000000000000000 and 0b00000000000000000000111111
-  out[30]  = (in[9]  >> 6)   & 0xff; // 0b00000000000011111111000000
-  out[31]  = (in[9]  >> 14)  & 0xff; // 0b00001111111100000000000000
-}
 
 
 int crypto_scalarmult(unsigned char *ss, const unsigned char *sk, const unsigned char *pk)
 {
-  group_ge p, k;
+  group_ge p, k, l;
   unsigned char t[32];
-  int i,j=5;
+  int i,j;
 
   for(i=0;i<32;i++) {
     t[i] = sk[i];
   }
 
-  unsigned int tmp[10];
-  convert32_10((int)t, tmp);
-  convert10_32(tmp, (char)t);
-
   t[0] &= 248;
   t[31] &= 127;
   t[31] |= 64;
 
-  if(group_ge_unpack(&p, pk)) return -1;
+  if(group_ge_unpack(&p, pk)) {return -1;}
+
+  group_ge table[16];
+  table[0] = group_ge_neutral;
+  for(i = 0; i < 15; i++) {
+    group_ge_add(table + i + 1, table + i, &p);
+  }
+
 
   k = p;
-  for(i=31;i>=0;i--)
+
+  group_ge_double(&k, &k);
+  group_ge_double(&k, &k);
+
+  group_ge_lookup(&l, table, (t[31] >> 4)&3);
+  group_ge_add(&k, &k, &l);
+
+  for(j=0;j < 4;j++)
   {
-    for(;j>=0;j--)
+    group_ge_double(&k, &k);
+  }
+
+  group_ge_lookup(&l, table, t[31] & 15);
+  group_ge_add(&k, &k, &l);
+  for(i=30;i>=0;i--)
+  {
+    for(j=0;j < 4;j++)
     {
       group_ge_double(&k, &k);
-      if((t[i] >> j) & 1) {
-        group_ge_add(&k, &k, &p);
-      }
     }
-    j = 7;
+    group_ge_lookup(&l, table, t[i] >> 4);
+    group_ge_add(&k, &k, &l);
+    for(j=0;j < 4;j++)
+    {
+      group_ge_double(&k, &k);
+    }
+    group_ge_lookup(&l, table, t[i] & 15);
+    group_ge_add(&k, &k, &l);
   }
 
   group_ge_pack(ss, &k);
+
   return 0;
 }
 
 int crypto_scalarmult_base(unsigned char *pk, const unsigned char *sk)
 {
-  unsigned char t[GROUP_GE_PACKEDBYTES];
-  group_ge_pack(t, &group_ge_base);
-  return crypto_scalarmult(pk, sk, t);
+  if(!alreadyComputed) {
+    compute(preComputed);
+    alreadyComputed = true;
+  }
+  group_ge k, l;
+  unsigned char t[32];
+  int i,j;
+
+  for(i=0;i<32;i++) {
+    t[i] = sk[i];
+  }
+
+  t[0] &= 248;
+  t[31] &= 127;
+  t[31] |= 64;
+
+  k = group_ge_base;
+  group_ge_double(&k, &k);
+  group_ge_double(&k, &k);
+  group_ge_lookup(&l, preComputed, (t[31] >> 4)&3);
+  group_ge_add(&k, &k, &l);
+
+  for(j=0;j < 4;j++)
+  {
+    group_ge_double(&k, &k);
+  }
+
+  group_ge_lookup(&l, preComputed, t[31] & 15);
+  group_ge_add(&k, &k, &l);
+
+  for(i=30;i>=0;i--)
+  {
+    for(j=0;j < 4;j++)
+    {
+      group_ge_double(&k, &k);
+    }
+    group_ge_lookup(&l, preComputed, t[i] >> 4);
+    group_ge_add(&k, &k, &l);
+
+    for(j=0;j < 4;j++)
+    {
+      group_ge_double(&k, &k);
+    }
+
+    group_ge_lookup(&l, preComputed, t[i] & 15);
+    group_ge_add(&k, &k, &l);
+  }
+
+  group_ge_pack(pk, &k);
+
+  return 0;
 }
