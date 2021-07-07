@@ -22,7 +22,9 @@ int crypto_scalarmult(unsigned char *ss, const unsigned char *sk, const unsigned
   t[31] &= 127;
   t[31] |= 64;
 
-  if(group_ge_unpack(&p, pk)) {return -1;}
+  if(group_ge_unpack(&p, pk)) {
+   return -1;
+  }
 
   group_ge table[16];
   table[0] = group_ge_neutral;
@@ -70,8 +72,8 @@ int crypto_scalarmult(unsigned char *ss, const unsigned char *sk, const unsigned
 int crypto_scalarmult_base(unsigned char *pk, const unsigned char *sk)
 {
   if(!alreadyComputed) {
-    compute(preComputed);
     alreadyComputed = true;
+    compute(preComputed);
   }
   group_ge k, l;
   unsigned char t[32];
