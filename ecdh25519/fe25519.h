@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-typedef struct 
+typedef struct
 {
-  uint32_t v[11]; 
+  uint32_t v[11];
 }
 fe25519;
 
@@ -46,6 +46,7 @@ unsigned char fe25519_getparity(const fe25519 *x);
 void fe25519_add(fe25519 *r, const fe25519 *x, const fe25519 *y);
 
 void fe25519_double(fe25519 *r, const fe25519 *x);
+
 void fe25519_triple(fe25519 *r, const fe25519 *x);
 
 void fe25519_sub(fe25519 *r, const fe25519 *x, const fe25519 *y);
