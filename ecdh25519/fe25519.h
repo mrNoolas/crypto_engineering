@@ -5,7 +5,7 @@
 
 typedef struct 
 {
-  uint32_t v[32]; 
+  uint32_t v[11]; 
 }
 fe25519;
 
